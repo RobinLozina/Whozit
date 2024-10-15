@@ -1,0 +1,20 @@
+# Node.js
+node_modules/
+dist/
+
+# Python
+venv/
+__pycache__/
+*.py[cod]
+
+# Django
+db.sqlite3
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# General
+.DS_Store
+.env
