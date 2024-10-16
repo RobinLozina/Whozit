@@ -1,6 +1,6 @@
 <template>
   <div class="game">
-    <h2 class="text-center text-2xl font-bold">Game Room: {{ roomName }}</h2>
+    <h2 class="text-center text-2xl font-bold">Game Room: {{ roomCode }}</h2>
     <GameBoard
       :characters="characters"
       @character-selected="handleCharacterSelection"
@@ -28,14 +28,14 @@ export default {
   },
   data() {
     return {
-      roomName: this.$route.params.roomName,
+      roomCode: this.$route.params.code, // Extract roomCode from the URL params
       newMessage: "",
       messages: [],
       characters: [],
       ws: null,
     };
   },
-  created() {
+  mounted() {
     this.connectToWebSocket();
   },
   beforeUnmount() {
@@ -45,11 +45,13 @@ export default {
   },
   methods: {
     connectToWebSocket() {
-      const wsUrl = `ws://127.0.0.1:8000/ws/game/${this.roomName}/`;
+      const wsUrl = `ws://127.0.0.1:8000/ws/game/${this.roomCode}/`;
+      console.log("Connecting to WebSocket for Game Room:", wsUrl);
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
+        console.log("WebSocket Message For Game Received:", data); // Log the entire data to see its content
         if (data.message.event === "game_started") {
           this.characters = data.message.characters; // Set character data when game starts
         } else if (data.message.event === "chat") {
@@ -58,6 +60,7 @@ export default {
       };
 
       this.ws.onclose = () => {
+        console.log("Didnt connect to Game Room");
         console.log("WebSocket connection closed.");
       };
     },

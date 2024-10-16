@@ -1,5 +1,5 @@
 # game_logic.py
-from .models import Room, Character
+from .models import Game, Character
 import os
 from django.conf import settings
 
@@ -15,20 +15,16 @@ def initialize_game(room_code, selected_folder):
         if os.path.isfile(os.path.join(character_path, f))
     ]
 
-    # Ensure we have at least 24 characters; repeat the images if there are fewer
-    total_images = 24
-    character_files = (character_files * ((total_images // len(character_files)) + 1))[:total_images]
-
-    # Initialize game in the database
-    game, created = Room.objects.get_or_create(room_code=room_code, defaults={'selected_folder': selected_folder})
+    # Get or create the Game instance
+    game, created = Game.objects.get_or_create(room_code=room_code, defaults={'selected_folder': selected_folder})
     
     # Create Character instances for each character in the folder
     Character.objects.filter(game=game).delete()  # Clear any existing characters for this game
     for file_name in character_files:
         Character.objects.create(
-            game=game,
+            game=game,  # Associate each character with the game
             name=os.path.splitext(file_name)[0],
-            image_url=f'/media/characters/{selected_folder}/{file_name}'
+            image=f'characters/{selected_folder}/{file_name}'
         )
 
     # Return the game data, including the list of characters
