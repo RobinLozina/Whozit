@@ -17,8 +17,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.urls import re_path
+from django.conf import settings
+from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
-from gameLogic.views import home, RoomViewSet, JoinRoomView, WaitingRoomView, StartGameView 
+from gameLogic.views import home, character_folders, RoomViewSet, JoinRoomView, WaitingRoomView, StartGameView 
 
 router = DefaultRouter()
 router.register(r'rooms', RoomViewSet, basename='room')
@@ -29,5 +31,6 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/join/<uuid:code>/', JoinRoomView.as_view(), name='join_room'),
     path('api/waiting/<uuid:code>/', WaitingRoomView.as_view(), name='waiting_room'),
-    path('api/start/<uuid:code>/', StartGameView.as_view(), name='start_game'),  # Add this line
-]
+    path('api/start/<uuid:code>/', StartGameView.as_view(), name='start_game'),
+    path('api/character_folders/', character_folders, name='character_folders'),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

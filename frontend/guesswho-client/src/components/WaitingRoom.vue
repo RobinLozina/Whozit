@@ -8,8 +8,21 @@
       </li>
     </ul>
     <div v-if="isCreator">
-      <button @click="startGame">Start Game</button>
-      <!-- Add additional controls for the creator here -->
+      <div class="creator-controls">
+        <label for="character-folder">Select Character Folder:</label>
+        <select v-model="selectedFolder" id="character-folder">
+          <option
+            v-for="folder in availableFolders"
+            :key="folder"
+            :value="folder"
+          >
+            {{ folder }}
+          </option>
+        </select>
+        <button @click="startGame" :disabled="!selectedFolder">
+          Start Game
+        </button>
+      </div>
     </div>
     <div v-else>
       <p>Waiting for the creator to start the game...</p>
@@ -27,6 +40,8 @@ export default {
       players: [],
       isCreator: false,
       ws: null, // WebSocket connection
+      availableFolders: [], // List of available character folders
+      selectedFolder: null, // Folder selected by the creator
     };
   },
   created() {
@@ -40,6 +55,9 @@ export default {
 
     // Establish WebSocket connection to listen for game start
     this.connectWebSocket();
+
+    // If the player is the creator, fetch the available character folders
+    this.fetchAvailableFolders();
   },
   beforeUnmount() {
     if (this.ws) {
@@ -68,8 +86,23 @@ export default {
 
         this.players = response.data.room.players;
         this.isCreator = response.data.is_creator;
+
+        if (this.isCreator) {
+          this.fetchAvailableFolders();
+        }
       } catch (error) {
         console.error("Error fetching room details:", error);
+      }
+    },
+    async fetchAvailableFolders() {
+      try {
+        // Fetch the list of available character folders
+        const response = await axios.get(
+          `http://127.0.0.1:8000/api/character_folders/`
+        );
+        this.availableFolders = response.data.folders; // Assuming response returns an array of folder names
+      } catch (error) {
+        console.error("Error fetching character folders:", error);
       }
     },
     connectWebSocket() {
@@ -91,9 +124,14 @@ export default {
       };
     },
     startGame() {
-      if (this.ws) {
-        // Send message via WebSocket to signal that the game is starting
-        this.ws.send(JSON.stringify({ event: "start_game" }));
+      if (this.ws && this.selectedFolder) {
+        // Send message via WebSocket to signal that the game is starting with the selected folder
+        this.ws.send(
+          JSON.stringify({
+            event: "start_game",
+            folder: this.selectedFolder,
+          })
+        );
       }
     },
   },
@@ -101,5 +139,12 @@ export default {
 </script>
 
 <style scoped>
-/* Add any styles you need for the waiting room */
+.waiting-room {
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.creator-controls {
+  margin-top: 20px;
+}
 </style>

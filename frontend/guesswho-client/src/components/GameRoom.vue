@@ -1,6 +1,10 @@
 <template>
   <div class="game">
     <h2 class="text-center text-2xl font-bold">Game Room: {{ roomName }}</h2>
+    <GameBoard
+      :characters="characters"
+      @character-selected="handleCharacterSelection"
+    />
     <div class="messages">
       <div v-for="(message, index) in messages" :key="index" class="message">
         {{ message }}
@@ -16,12 +20,18 @@
 </template>
 
 <script>
+import GameBoard from "./GameBoard.vue";
+
 export default {
+  components: {
+    GameBoard,
+  },
   data() {
     return {
       roomName: this.$route.params.roomName,
       newMessage: "",
       messages: [],
+      characters: [],
       ws: null,
     };
   },
@@ -40,7 +50,11 @@ export default {
 
       this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        this.messages.push(data.message);
+        if (data.message.event === "game_started") {
+          this.characters = data.message.characters; // Set character data when game starts
+        } else if (data.message.event === "chat") {
+          this.messages.push(data.message.message);
+        }
       };
 
       this.ws.onclose = () => {
@@ -49,9 +63,17 @@ export default {
     },
     sendMessage() {
       if (this.newMessage.trim()) {
-        this.ws.send(JSON.stringify({ message: this.newMessage }));
+        this.ws.send(
+          JSON.stringify({ event: "chat", message: this.newMessage })
+        );
         this.newMessage = "";
       }
+    },
+    handleCharacterSelection(character) {
+      // Update game state when a character is selected
+      console.log(`Character selected: ${character.name}`);
+      // Send character selection update to server (optional)
+      this.ws.send(JSON.stringify({ event: "character_selected", character }));
     },
   },
 };

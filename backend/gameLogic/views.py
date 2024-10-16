@@ -7,7 +7,9 @@ from channels.layers import get_channel_layer
 from django.shortcuts import render
 from .models import Room, Player
 from .serializers import RoomSerializer, PlayerSerializer
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+import os
+from django.conf import settings
 
 
 def home(request):
@@ -22,6 +24,21 @@ class RoomViewSet(viewsets.ModelViewSet):
         player = Player.objects.create(room=room, is_creator=True)  # First player is the creator
         serializer = self.get_serializer(room)
         return Response(serializer.data)
+    
+
+def character_folders(request):
+    # Define the base path to the character folders
+    base_path = os.path.join(settings.MEDIA_ROOT, 'characters')
+
+    try:
+        # Get a list of folders inside the base character folder
+        folders = [
+            folder for folder in os.listdir(base_path)
+            if os.path.isdir(os.path.join(base_path, folder))
+        ]
+        return JsonResponse({'folders': folders})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 class JoinRoomView(APIView):
     def post(self, request, code, format=None):

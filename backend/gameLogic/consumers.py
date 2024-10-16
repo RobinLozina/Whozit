@@ -1,5 +1,6 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
+from gameLogic.game_logic import initialize_game  # Import the initialize_game function
 
 class WaitingRoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -37,26 +38,38 @@ class WaitingRoomConsumer(AsyncWebsocketConsumer):
                 event = text_data_json['event']
 
                 if event == 'start_game':
-                    # Handle the start game event
+                    # Handle the start game event with selected folder
+                    selected_folder = text_data_json.get('folder')
+                    if selected_folder:
+                        # Call initialize_game to get characters
+                        game_data = initialize_game(self.room_code, selected_folder)
+                        
+                        # Broadcast the game started event along with the characters to the room group
+                        await self.channel_layer.group_send(
+                            self.room_group_name,
+                            {
+                                'type': 'game_start',
+                                'message': {
+                                    'event': 'game_started',
+                                    'characters': game_data['characters'],
+                                    'room_code': game_data['room_code'],
+                                }
+                            }
+                        )
+
+                elif event == 'chat':
+                    # Broadcast the message to the room group
+                    message = text_data_json.get('message', '')
                     await self.channel_layer.group_send(
                         self.room_group_name,
                         {
                             'type': 'chat_message',
-                            'message': {'event': 'game_started'}
+                            'message': {
+                                'event': 'chat',
+                                'message': message
+                            }
                         }
                     )
-
-            elif 'message' in text_data_json:
-                message = text_data_json['message']
-
-                # Broadcast the message to the room group
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'chat_message',
-                        'message': message
-                    }
-                )
 
             else:
                 # Handle case where the data does not match any known structure
@@ -69,15 +82,25 @@ class WaitingRoomConsumer(AsyncWebsocketConsumer):
             # Handle any other exceptions
             print(f"Unexpected error: {e}")
 
-
     # Receive message from the room group
+    async def game_start(self, event):
+        # Handle the game start event
+        message = event['message']
+
+        # Send the message to the WebSocket with the list of characters
+        await self.send(text_data=json.dumps({
+            'message': message
+        }))
+
     async def chat_message(self, event):
+        # Handle a chat message
         message = event['message']
 
         # Send the message to the WebSocket
         await self.send(text_data=json.dumps({
             'message': message
         }))
+
 
 class GameRoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -115,25 +138,33 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
 
                 if event == 'start_game':
                     # Handle the start game event
+                    selected_folder = text_data_json.get('folder')
+                    if selected_folder:
+                        # Handle game start and broadcast to the group
+                        await self.channel_layer.group_send(
+                            self.room_group_name,
+                            {
+                                'type': 'game_start',
+                                'message': {
+                                    'event': 'game_started',
+                                    'folder': selected_folder
+                                }
+                            }
+                        )
+
+                elif event == 'chat':
+                    # Broadcast the message to the room group
+                    message = text_data_json.get('message', '')
                     await self.channel_layer.group_send(
                         self.room_group_name,
                         {
                             'type': 'chat_message',
-                            'message': {'event': 'game_started'}
+                            'message': {
+                                'event': 'chat',
+                                'message': message
+                            }
                         }
                     )
-
-            elif 'message' in text_data_json:
-                message = text_data_json['message']
-
-                # Broadcast the message to the room group
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'chat_message',
-                        'message': message
-                    }
-                )
 
             else:
                 # Handle case where the data does not match any known structure
@@ -146,9 +177,18 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
             # Handle any other exceptions
             print(f"Unexpected error: {e}")
 
-
     # Receive message from the room group
+    async def game_start(self, event):
+        # Handle the game start event
+        message = event['message']
+
+        # Send the message to the WebSocket
+        await self.send(text_data=json.dumps({
+            'message': message
+        }))
+
     async def chat_message(self, event):
+        # Handle a chat message
         message = event['message']
 
         # Send the message to the WebSocket
