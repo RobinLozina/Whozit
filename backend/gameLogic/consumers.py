@@ -3,8 +3,12 @@ import django
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 import os
+import asyncio
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'guessWho.settings')
 django.setup()
+
+connected_players = {}  # Track the players in each game room
+games_data = {}  # Store game data for each room code
 
 # Now import Django settings or models
 from gameLogic.game_logic import initialize_game
@@ -49,8 +53,12 @@ class WaitingRoomConsumer(AsyncWebsocketConsumer):
                     if selected_folder:
                         # Use sync_to_async to run the initialize_game function in a thread-safe way
                         game_data = await sync_to_async(initialize_game)(self.room_code, selected_folder)
-                        
+                        games_data[self.room_code] = game_data
+
                         # Broadcast the game started event along with the characters to the room group
+                        print(f"Broadcasting game start event to room group: {self.room_group_name}")
+
+                        # First, send the game start event to all players in the waiting room
                         await self.channel_layer.group_send(
                             self.room_group_name,
                             {
@@ -62,36 +70,7 @@ class WaitingRoomConsumer(AsyncWebsocketConsumer):
                                 }
                             }
                         )
-                        await self.channel_layer.group_send(
-                            f'game_room_{self.room_code}',
-                            {
-                                'type': 'game_start',
-                                'message': {
-                                    'event': 'game_started',
-                                    'characters': game_data['characters'],
-                                    'room_code': game_data['room_code'],
-                                }
-                            }
-                        )
 
-                elif event == 'chat':
-                    # Broadcast the message to the room group
-                    message = text_data_json.get('message', '')
-                    await self.channel_layer.group_send(
-                        self.room_group_name,
-                        {
-                            'type': 'chat_message',
-                            'message': {
-                                'event': 'chat',
-                                'message': message
-                            }
-                        }
-                    )
-
-            else:
-                # Handle case where the data does not match any known structure
-                print("Error: Unrecognized data format.")
-        
         except json.JSONDecodeError as e:
             # Handle JSON parsing error
             print(f"Error decoding JSON: {e}")
@@ -118,38 +97,75 @@ class WaitingRoomConsumer(AsyncWebsocketConsumer):
             'message': message
         }))
 
-    async def chat_message(self, event):
-        # Handle a chat message
-        message = event['message']
-
-        # Send the message to the WebSocket
-        await self.send(text_data=json.dumps({
-            'message': message
-        }))
-
 
 class GameRoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_code = self.scope['url_route']['kwargs']['room_code']
         self.room_group_name = f'game_room_{self.room_code}'
 
-        print(f"Attempting connection for game room code: {self.room_code}")
+        print(f"GameRoomConsumer attempting connection for game room code: {self.room_code}")
 
-        # Join the room group
+        # Join the game room group
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
         )
+        print(f"GameRoomConsumer joined group: {self.room_group_name}")
+
         await self.accept()
+        print("GameRoomConsumer WebSocket connection accepted.")
+
+        # Add player to the connected players tracker
+        if self.room_code not in connected_players:
+            connected_players[self.room_code] = 0
+        connected_players[self.room_code] += 1
+
+        print(f"Number of players connected in room {self.room_code}: {connected_players[self.room_code]}")
+
+        # If both players are connected, trigger game start
+        if connected_players[self.room_code] >= 2:
+            await self.start_game()
 
     async def disconnect(self, close_code):
-        # Leave the room group
+        # Leave the game room group
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
+        print(f"GameRoomConsumer left group: {self.room_group_name}")
 
-    # Receive message from WebSocket
+        if self.room_code in connected_players:
+            connected_players[self.room_code] -= 1
+            if connected_players[self.room_code] <= 0:
+                del connected_players[self.room_code]  # Remove the room if no players left
+
+    async def start_game(self):
+        if self.room_code in games_data:
+            game_data = games_data[self.room_code]
+
+            # Broadcast game start event with character data
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'game_start',
+                    'message': {
+                        'event': 'game_started',
+                        'characters': game_data['characters'],
+                        'room_code': self.room_code,
+                    }
+                }
+            )
+            print(f"Game started for room: {self.room_code}")
+
+    async def game_start(self, event):
+        message = event['message']
+        print(f"GameRoomConsumer received game start event: {message}")
+
+        # Send the message to the WebSocket (including characters)
+        await self.send(text_data=json.dumps({
+            'message': message
+        }))
+
     async def receive(self, text_data):
         try:
             text_data_json = json.loads(text_data)
@@ -158,15 +174,15 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
                 event = text_data_json['event']
 
                 if event == 'chat':
-                    # Broadcast the message to the room group
                     message = text_data_json.get('message', '')
+                    # Broadcast the chat message to the game room group
                     await self.channel_layer.group_send(
                         self.room_group_name,
                         {
                             'type': 'chat_message',
                             'message': {
                                 'event': 'chat',
-                                'message': message
+                                'message': message,
                             }
                         }
                     )
@@ -176,19 +192,9 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             print(f"Unexpected error: {e}")
 
-    # Receive message from the room group
-    async def game_start(self, event):
-        # Handle the game start event with characters
-        message = event['message']
-
-        # Send the message to the WebSocket (including characters)
-        await self.send(text_data=json.dumps({
-            'message': message
-        }))
-
     async def chat_message(self, event):
-        # Handle a chat message
         message = event['message']
+        print(f"GameRoomConsumer received chat message: {message}")
 
         # Send the message to the WebSocket
         await self.send(text_data=json.dumps({

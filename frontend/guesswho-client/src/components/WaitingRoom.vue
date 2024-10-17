@@ -121,7 +121,7 @@ export default {
       };
 
       this.ws.onclose = () => {
-        console.log("WebSocket connection closed.");
+        console.log("WebSocket connection closed for waiting room.");
       };
     },
     startGame() {

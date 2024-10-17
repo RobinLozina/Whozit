@@ -61,7 +61,7 @@ export default {
 
       this.ws.onclose = () => {
         console.log("Didnt connect to Game Room");
-        console.log("WebSocket connection closed.");
+        console.log("WebSocket connection closed for Game Room.");
       };
     },
     sendMessage() {
