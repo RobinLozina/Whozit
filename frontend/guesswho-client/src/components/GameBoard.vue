@@ -36,7 +36,8 @@ export default {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   grid-template-rows: repeat(4, auto);
-  gap: 10px;
+  column-gap: 10px;
+  row-gap: 20px;
   padding: 20px;
 }
 </style>

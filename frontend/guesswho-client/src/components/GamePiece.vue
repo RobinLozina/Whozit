@@ -9,8 +9,7 @@
       :alt="character.name"
       class="character-image"
     />
-    <p>{{ character.name }}</p>
-    <p>HELLO</p>
+    <p class="character-name">{{ character.name }}</p>
   </div>
 </template>
 
@@ -43,22 +42,38 @@ export default {
 
 <style scoped>
 .game-piece {
-  width: 100px;
-  height: 150px;
+  width: 100px; /* Fixed width */
+  height: 150px; /* Fixed height */
   border: 1px solid #ccc;
   border-radius: 8px;
   padding: 10px;
   text-align: center;
   cursor: pointer;
   transition: transform 0.3s;
+  display: flex; /* Use flexbox to align items */
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between; /* Ensure even spacing between elements */
 }
 
 .game-piece.lowered {
   transform: translateY(20px);
   opacity: 0.7;
 }
+
 .character-image {
-  width: 100%;
-  height: auto;
+  width: 80px; /* Consistent width for all images */
+  height: 80px; /* Consistent height for all images */
+  object-fit: cover; /* Ensure the image covers the area without distortion */
+  border-radius: 50%; /* Makes the image round, optional */
+}
+
+.character-name {
+  margin-top: 5px; /* Add some space between the image and the name */
+  font-size: 12px; /* Make the font size suitable for the container */
+  white-space: nowrap; /* Prevent the text from wrapping to the next line */
+  overflow: hidden; /* Hide overflowing text */
+  text-overflow: ellipsis; /* Add an ellipsis (...) if the text overflows */
+  width: 100%; /* Ensure the text takes the full width of the container */
 }
 </style>
