@@ -28,6 +28,9 @@ def initialize_game(room_code, selected_folder):
     random.shuffle(character_files)
     character_files = character_files[:24]  # Ensure there are exactly 24 characters
 
+    # Assign one unique character to each player (assuming two players)
+    player_characters = random.sample(character_files, 2)
+
     # Get or create the Game instance
     game, created = Game.objects.get_or_create(room_code=room_code, defaults={'selected_folder': selected_folder})
     
@@ -62,5 +65,12 @@ def initialize_game(room_code, selected_folder):
 
     return {
         'room_code': room_code,
-        'characters': characters
+        'characters': characters,
+        'player_characters': [
+            {
+                'name': os.path.splitext(player_char)[0],
+                'image_url': f'http://127.0.0.1:8000{settings.MEDIA_URL}characters/{selected_folder}/{player_char}'
+            }
+            for player_char in player_characters
+        ]
     }

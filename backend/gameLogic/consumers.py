@@ -152,6 +152,7 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
                         'event': 'game_started',
                         'characters': game_data['characters'],
                         'room_code': self.room_code,
+                        'player_characters': game_data['player_characters'],
                     }
                 }
             )
@@ -186,6 +187,30 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
                             }
                         }
                     )
+            elif event == 'guess_character':
+                guessed_character = text_data_json.get('character_name')
+                player_id = text_data_json.get('player_id')  # Assuming each player has a unique identifier
+
+                # Check if the guessed character matches the other player's character
+                game_data = games_data.get(self.room_code, {})
+                other_player_character = game_data['player_characters'][1 if player_id == 0 else 0]
+
+                correct = guessed_character == other_player_character['name']
+
+                # Notify both players of the guess result
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'guess_result',
+                        'message': {
+                            'event': 'guess_result',
+                            'correct': correct,
+                            'guessed_character': guessed_character,
+                            'actual_character': other_player_character['name'],
+                        }
+                    }
+                )
+    
 
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON: {e}")
@@ -197,6 +222,15 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
         print(f"GameRoomConsumer received chat message: {message}")
 
         # Send the message to the WebSocket
+        await self.send(text_data=json.dumps({
+            'message': message
+        }))
+
+    async def guess_result(self, event):
+        message = event['message']
+        print(f"GameRoomConsumer received guess result: {message}")
+
+        # Send the guess result to the WebSocket
         await self.send(text_data=json.dumps({
             'message': message
         }))

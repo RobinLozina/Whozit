@@ -4,6 +4,7 @@
       v-for="(character, index) in characters"
       :key="index"
       :character="character"
+      :is-guess-mode="isGuessMode"
       @character-clicked="selectCharacter"
     />
   </div>
@@ -21,11 +22,17 @@ export default {
       type: Array,
       required: true,
     },
+    isGuessMode: {
+      type: Boolean,
+      required: true,
+    },
   },
   methods: {
     selectCharacter(character) {
-      // Emit the character that was clicked to the parent component
-      this.$emit("character-selected", character);
+      // Emit the character that was clicked to the parent component for handling
+      if (this.isGuessMode) {
+        this.$emit("character-selected", character);
+      }
     },
   },
 };

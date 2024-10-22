@@ -20,21 +20,25 @@ export default {
       type: Object,
       required: true,
     },
+    isGuessMode: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
   },
   data() {
     return {
-      isLowered: this.character.isLowered || false, // Local state to manage lowered status
+      isLowered: this.character.isLowered || false,
     };
   },
   methods: {
     toggleLowered() {
-      this.isLowered = !this.isLowered;
-
-      // Emit an event to notify the GameBoard component that the character was clicked
-      this.$emit("character-clicked", {
-        ...this.character,
-        isLowered: this.isLowered,
-      });
+      if (this.isGuessMode) {
+        this.$emit("character-clicked", this.character);
+      } else {
+        this.isLowered = !this.isLowered;
+        // Optionally keep lowering logic outside guess mode
+      }
     },
   },
 };
@@ -53,7 +57,7 @@ export default {
   display: flex; /* Use flexbox to align items */
   flex-direction: column;
   align-items: center;
-  justify-content: space-between; /* Ensure even spacing between elements */
+  justify-content: space-between;
 }
 
 .game-piece.lowered {
@@ -62,18 +66,18 @@ export default {
 }
 
 .character-image {
-  width: 80px; /* Consistent width for all images */
-  height: 80px; /* Consistent height for all images */
-  object-fit: cover; /* Ensure the image covers the area without distortion */
-  border-radius: 50%; /* Makes the image round, optional */
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .character-name {
-  margin-top: 5px; /* Add some space between the image and the name */
-  font-size: 12px; /* Make the font size suitable for the container */
-  white-space: nowrap; /* Prevent the text from wrapping to the next line */
-  overflow: hidden; /* Hide overflowing text */
-  text-overflow: ellipsis; /* Add an ellipsis (...) if the text overflows */
-  width: 100%; /* Ensure the text takes the full width of the container */
+  margin-top: 5px;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
 }
 </style>
