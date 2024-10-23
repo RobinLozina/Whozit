@@ -9,16 +9,21 @@
     </ul>
     <div v-if="isCreator">
       <div class="creator-controls">
-        <label for="character-folder">Select Character Folder:</label>
-        <select v-model="selectedFolder" id="character-folder">
-          <option
-            v-for="folder in availableFolders"
-            :key="folder"
+        <label>Select Character Folder:</label>
+        <div
+          v-for="folder in filteredFolders"
+          :key="folder"
+          class="folder-option"
+        >
+          <input
+            type="checkbox"
+            :id="folder"
             :value="folder"
-          >
-            {{ folder }}
-          </option>
-        </select>
+            :checked="selectedFolder === folder"
+            @change="selectFolder(folder)"
+          />
+          <label :for="folder">{{ folder }}</label>
+        </div>
         <button @click="startGame" :disabled="!selectedFolder">
           Start Game
         </button>
@@ -42,6 +47,8 @@ export default {
       ws: null, // WebSocket connection
       availableFolders: [], // List of available character folders
       selectedFolder: null, // Folder selected by the creator
+      isCouilloumVisible: false, // Visibility flag for "Couilloum" folder
+      typedKeys: "", // Track user key inputs
     };
   },
   created() {
@@ -58,11 +65,23 @@ export default {
 
     // If the player is the creator, fetch the available character folders
     this.fetchAvailableFolders();
+
+    // Add keydown event listener
+    window.addEventListener("keydown", this.handleKeyPress);
   },
   beforeUnmount() {
     if (this.ws) {
       this.ws.close(); // Close WebSocket when component is destroyed
     }
+    // Remove keydown event listener
+    window.removeEventListener("keydown", this.handleKeyPress);
+  },
+  computed: {
+    filteredFolders() {
+      return this.availableFolders.filter((folder) => {
+        return folder !== "Couilloum" || this.isCouilloumVisible;
+      });
+    },
   },
   methods: {
     async joinRoom() {
@@ -124,6 +143,15 @@ export default {
         console.log("WebSocket connection closed for waiting room.");
       };
     },
+    selectFolder(folder) {
+      // Set the selected folder, unselect any other
+      if (this.selectedFolder === folder) {
+        // If the same folder is clicked, unselect it
+        this.selectedFolder = null;
+      } else {
+        this.selectedFolder = folder;
+      }
+    },
     startGame() {
       if (this.ws && this.selectedFolder) {
         // Send message via WebSocket to signal that the game is starting with the selected folder
@@ -133,6 +161,21 @@ export default {
             folder: this.selectedFolder,
           })
         );
+      }
+    },
+    handleKeyPress(event) {
+      // Track typed keys
+      this.typedKeys += event.key;
+
+      // If the user types "c!", reveal the "Couilloum" folder
+      if (this.typedKeys.includes("c!")) {
+        this.isCouilloumVisible = true;
+        this.typedKeys = ""; // Reset the key tracker after detection
+      }
+
+      // Limit the length of `typedKeys` to prevent it from growing indefinitely
+      if (this.typedKeys.length > 2) {
+        this.typedKeys = this.typedKeys.slice(-2);
       }
     },
   },
@@ -145,7 +188,18 @@ export default {
   max-width: 600px;
   margin: 0 auto;
 }
+
 .creator-controls {
   margin-top: 20px;
+}
+
+.folder-option {
+  margin: 10px 0;
+  display: flex;
+  align-items: center;
+}
+
+input[type="checkbox"] {
+  margin-right: 10px;
 }
 </style>

@@ -160,7 +160,7 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
 
     async def game_start(self, event):
         message = event['message']
-        print(f"GameRoomConsumer received game start event: {message}")
+        # print(f"GameRoomConsumer received game start event: {message}")
 
         # Send the message to the WebSocket (including characters)
         await self.send(text_data=json.dumps({
@@ -187,29 +187,56 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
                             }
                         }
                     )
-            elif event == 'guess_character':
-                guessed_character = text_data_json.get('character_name')
-                player_id = text_data_json.get('player_id')  # Assuming each player has a unique identifier
 
-                # Check if the guessed character matches the other player's character
-                game_data = games_data.get(self.room_code, {})
-                other_player_character = game_data['player_characters'][1 if player_id == 0 else 0]
-
-                correct = guessed_character == other_player_character['name']
-
-                # Notify both players of the guess result
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'guess_result',
-                        'message': {
-                            'event': 'guess_result',
-                            'correct': correct,
-                            'guessed_character': guessed_character,
-                            'actual_character': other_player_character['name'],
+                elif event == 'guess_mode':
+                    player_id = text_data_json.get('player_id')
+                    await self.channel_layer.group_send(
+                        self.room_group_name,
+                        {
+                            'type': 'guess_mode_start',
+                            'message': {
+                                'event': 'guess_mode',
+                                'player_id': player_id,
+                                'is_guessing': True,
+                            }
                         }
-                    }
-                )
+                    )
+
+                elif event == 'quit_guessing':
+                    await self.channel_layer.group_send(
+                        self.room_group_name,
+                        {
+                            'type': 'guess_mode_end',
+                            'message': {
+                                'event': 'guess_mode',
+                                'is_guessing': False,
+                            }
+                        }
+                    )
+
+                elif event == 'guess_character':
+                    guessed_character = text_data_json.get('character_name')
+                    player_id = text_data_json.get('player_id')  # Assuming each player has a unique identifier
+
+                    # Check if the guessed character matches the other player's character
+                    game_data = games_data.get(self.room_code, {})
+                    other_player_character = game_data['player_characters'][1 if player_id == 0 else 0]
+
+                    correct = guessed_character == other_player_character['name']
+
+                    # Notify both players of the guess result
+                    await self.channel_layer.group_send(
+                        self.room_group_name,
+                        {
+                            'type': 'guess_result',
+                            'message': {
+                                'event': 'guess_result',
+                                'correct': correct,
+                                'guessed_character': guessed_character,
+                                'actual_character': other_player_character['name'],
+                            }
+                        }
+                    )
     
 
         except json.JSONDecodeError as e:
@@ -234,3 +261,11 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'message': message
         }))
+        
+    async def guess_mode_start(self, event):
+        message = event['message']
+        await self.send(text_data=json.dumps({'message': message}))
+
+    async def guess_mode_end(self, event):
+        message = event['message']
+        await self.send(text_data=json.dumps({'message': message}))

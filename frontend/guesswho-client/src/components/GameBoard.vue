@@ -5,6 +5,9 @@
       :key="index"
       :character="character"
       :is-guess-mode="isGuessMode"
+      :is-selected="
+        selectedCharacter && selectedCharacterName === character.name
+      "
       @character-clicked="selectCharacter"
     />
   </div>
@@ -26,11 +29,24 @@ export default {
       type: Boolean,
       required: true,
     },
+    selectedCharacter: {
+      type: Object,
+      required: false,
+      default: null,
+    },
+  },
+  data() {
+    return {
+      selectedCharacterName: null, // Track the currently selected character by ID
+    };
   },
   methods: {
     selectCharacter(character) {
-      // Emit the character that was clicked to the parent component for handling
       if (this.isGuessMode) {
+        // Set the selected character ID to the current character's ID
+        this.selectedCharacterName = character.name;
+
+        // Emit the character that was clicked to the parent component
         this.$emit("character-selected", character);
       }
     },
