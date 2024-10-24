@@ -1,17 +1,9 @@
 <template>
-  <div id="app" class="bg-gray-100 min-h-screen flex flex-col">
-    <header class="bg-blue-600 text-white p-4 text-center">
-      <h1 class="text-3xl font-bold">Guess Who?</h1>
-    </header>
-
-    <main class="flex-grow container mx-auto p-4">
+  <div id="app" class="bg-animated-gradient min-h-screen">
+    <main class="flex-grow container">
       <router-view />
       <!-- This will render the current route component (Home or Game) -->
     </main>
-
-    <footer class="bg-gray-800 text-white text-center p-2">
-      <p>&copy; 2024 Guess Who? Game</p>
-    </footer>
   </div>
 </template>
 
@@ -21,14 +13,32 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 /* Optional global styles */
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+  font-family: "Futura PT", "Bangers", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  color: #2c3e50;
-  padding: 0 20px;
+  color: white;
+}
+
+/* Background gradient and animation */
+.bg-animated-gradient {
+  background: linear-gradient(200deg, #1156fc 35%, hsl(169, 100%, 50%) 100%);
+  background-size: 200% 200%;
+  animation: colorTransition 5s alternate infinite;
+}
+
+@keyframes colorTransition {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 </style>

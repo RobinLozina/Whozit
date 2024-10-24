@@ -88,15 +88,6 @@ class WaitingRoomConsumer(AsyncWebsocketConsumer):
             'message': message
         }))
 
-    async def chat_message(self, event):
-        # Handle a chat message
-        message = event['message']
-
-        # Send the message to the WebSocket
-        await self.send(text_data=json.dumps({
-            'message': message
-        }))
-
 
 class GameRoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -176,6 +167,7 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
 
                 if event == 'chat':
                     message = text_data_json.get('message', '')
+                    player_id = text_data_json.get('player_id', None)
                     # Broadcast the chat message to the game room group
                     await self.channel_layer.group_send(
                         self.room_group_name,
@@ -184,6 +176,7 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
                             'message': {
                                 'event': 'chat',
                                 'message': message,
+                                'player_id': player_id,
                             }
                         }
                     )
@@ -261,7 +254,7 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'message': message
         }))
-        
+
     async def guess_mode_start(self, event):
         message = event['message']
         await self.send(text_data=json.dumps({'message': message}))

@@ -1,71 +1,106 @@
 <template>
-  <div class="game">
-    <h2 class="text-center text-2xl font-bold">Game Room: {{ roomCode }}</h2>
+  <div class="relative min-h-screen flex flex-row p-6">
+    <!-- Game Board and Controls -->
+    <div class="flex flex-col w-3/4 pr-4">
+      <GameBoard
+        :characters="characters"
+        :is-guess-mode="isGuessMode"
+        :selected-character="selectedCharacter"
+        @character-selected="handleCharacterSelection"
+      />
 
-    <!-- Guess button or "The other player is guessing!" message -->
-    <button
-      v-if="!isGuessMode && !opponentIsGuessing && !showReturnButton"
-      @click="toggleGuessMode"
-      class="guess-button"
-    >
-      Guess
-    </button>
-    <p v-else-if="opponentIsGuessing" class="guessing-message">
-      The other player is guessing!
-    </p>
+      <!-- Opponent Character Info -->
+      <div v-if="otherPlayerCharacter" class="mt-4 text-center">
+        <h3 class="text-xl font-bold mb-2 text-white">
+          Your Opponent's Character to Guess
+        </h3>
+        <div
+          class="border-4 inline-block rounded-lg pt-1 pb-4 px-4 bg-red-600 text-white"
+        >
+          <p class="mb-2 text-sm font-bold">
+            {{ otherPlayerCharacter.name }}
+          </p>
+          <img
+            :src="otherPlayerCharacter.image_url"
+            :alt="otherPlayerCharacter.name"
+            class="w-20 h-20 object-cover rounded-lg"
+          />
+        </div>
+      </div>
 
-    <!-- Confirm Guess and Quit Guessing buttons -->
-    <div v-if="isGuessMode" class="guess-mode-controls">
-      <button
-        v-if="selectedCharacter"
-        @click="confirmGuess"
-        class="confirm-guess-button"
+      <!-- Guess button or "The other player is guessing!" message -->
+      <div class="flex items-center justify-center mt-4">
+        <button
+          v-if="!isGuessMode && !opponentIsGuessing && !showReturnButton"
+          @click="toggleGuessMode"
+          class="custom-button"
+        >
+          Guess
+        </button>
+        <p
+          v-else-if="opponentIsGuessing"
+          class="text-2xl text-center font-bold"
+        >
+          The other player is guessing!
+        </p>
+      </div>
+
+      <!-- Confirm Guess and Quit Guessing buttons -->
+      <div v-if="isGuessMode" class="flex justify-center">
+        <button
+          v-if="selectedCharacter"
+          @click="confirmGuess"
+          class="mr-2 custom-button"
+        >
+          Confirm Guess
+        </button>
+        <button @click="quitGuessMode" class="custom-button">
+          Quit Guessing
+        </button>
+      </div>
+
+      <!-- Return to Waiting Room button -->
+      <div v-if="showReturnButton" class="flex justify-center mt-4">
+        <button @click="returnToWaitingRoom" class="custom-button">
+          Return to Waiting Room
+        </button>
+      </div>
+    </div>
+
+    <!-- Chat Messages and Input -->
+    <div class="chat-container w-1/4 flex flex-col">
+      <div
+        class="messages border-2 border-gray-400 rounded p-4 bg-gray-800 text-white overflow-y-auto flex-grow"
       >
-        Confirm Guess
-      </button>
-      <button @click="quitGuessMode" class="quit-guess-button">
-        Quit Guessing
-      </button>
-    </div>
+        <div
+          v-for="(message, index) in messages"
+          :key="index"
+          class="message mb-2"
+        >
+          <div
+            class="p-2 rounded-md"
+            :class="{
+              'bg-blue-500 text-white ml-auto w-2/3 text-right':
+                message.player_id === playerId,
+              'bg-yellow-500 text-black mr-auto w-2/3 text-left':
+                message.player_id !== playerId,
+            }"
+          >
+            {{ message.text }}
+          </div>
+        </div>
+      </div>
 
-    <!-- Return to Waiting Room button -->
-    <div v-if="showReturnButton" class="return-waiting-room">
-      <button @click="returnToWaitingRoom" class="return-waiting-button">
-        Return to Waiting Room
-      </button>
-    </div>
-
-    <GameBoard
-      :characters="characters"
-      :is-guess-mode="isGuessMode"
-      :selected-character="selectedCharacter"
-      @character-selected="handleCharacterSelection"
-    />
-
-    <div v-if="otherPlayerCharacter" class="player-character">
-      <h3>Your Opponent's Character to Guess</h3>
-      <div class="assigned-character">
-        <img
-          :src="otherPlayerCharacter.image_url"
-          :alt="otherPlayerCharacter.name"
-          class="assigned-character-image"
+      <!-- Input Section - Fixed at the Bottom -->
+      <div class="mt-2">
+        <input
+          v-model="newMessage"
+          @keyup.enter="sendMessage"
+          placeholder="Type your question or guess..."
+          class="p-2 border-2 border-gray-300 text-black rounded w-full"
         />
-        <p>{{ otherPlayerCharacter.name }}</p>
       </div>
     </div>
-
-    <div class="messages">
-      <div v-for="(message, index) in messages" :key="index" class="message">
-        {{ message }}
-      </div>
-    </div>
-
-    <input
-      v-model="newMessage"
-      @keyup.enter="sendMessage"
-      placeholder="Type your question or guess..."
-      class="input-message"
-    />
   </div>
 </template>
 
@@ -115,7 +150,10 @@ export default {
           this.otherPlayerCharacter =
             data.message.player_characters[1 - playerIndex];
         } else if (data.message.event === "chat") {
-          this.messages.push(data.message.message);
+          this.messages.push({
+            text: data.message.message,
+            player_id: data.message.player_id,
+          });
         } else if (data.message.event === "guess_result") {
           alert(`Guess was ${data.message.correct ? "correct" : "incorrect"}!`);
           // Show return button after guess is made
@@ -138,7 +176,11 @@ export default {
     sendMessage() {
       if (this.newMessage.trim()) {
         this.ws.send(
-          JSON.stringify({ event: "chat", message: this.newMessage })
+          JSON.stringify({
+            event: "chat",
+            message: this.newMessage,
+            player_id: this.playerId,
+          })
         );
         this.newMessage = "";
       }
@@ -187,7 +229,6 @@ export default {
       );
     },
     returnToWaitingRoom() {
-      // Redirect the user to the waiting room
       this.$router.push(`/waiting/${this.roomCode}`);
     },
   },
@@ -195,102 +236,41 @@ export default {
 </script>
 
 <style scoped>
-.game {
-  padding: 20px;
-  max-width: 600px;
-  margin: 0 auto;
-}
-.guess-button {
-  margin-top: 20px;
-  padding: 10px 20px;
-  background-color: #007bff;
-  color: white;
-  border: none;
+.custom-button {
+  padding: 8px;
+  width: 200px;
+  color: #ffffff;
+  border: 4px solid #e0e300;
+  background-color: #1156fc;
   border-radius: 4px;
-  cursor: pointer;
   font-size: 16px;
-}
-.guess-button:hover {
-  background-color: #0056b3;
+  text-transform: uppercase;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 1000;
+  transition: all linear 100ms;
 }
 
-.guess-mode-controls {
-  margin-top: 20px;
-}
-
-.confirm-guess-button {
-  margin-right: 10px;
-  padding: 10px 20px;
-  background-color: #28a745;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-}
-.confirm-guess-button:hover {
-  background-color: #218838;
-}
-
-.quit-guess-button {
-  padding: 10px 20px;
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-}
-.quit-guess-button:hover {
-  background-color: #c82333;
-}
-
-.return-waiting-room {
-  margin-top: 20px;
-  text-align: center;
-}
-.return-waiting-button {
-  padding: 10px 20px;
-  background-color: #ffcc00;
-  color: black;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-}
-.return-waiting-button:hover {
-  background-color: #e6b800;
+.chat-container {
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .messages {
-  margin-bottom: 20px;
-  max-height: 400px;
-  overflow-y: auto;
-  border: 1px solid #ccc;
-  padding: 10px;
-  background-color: #f9f9f9;
+  flex-grow: 1;
 }
-.input-message {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+
+.message {
+  word-wrap: break-word; /* Ensure long words break */
+  word-break: break-word; /* Handle overflow gracefully */
+  max-width: 100%; /* Make sure the message doesn't exceed its container width */
 }
-.player-character {
-  margin-top: 20px;
-  text-align: center;
-}
-.assigned-character {
-  display: inline-block;
-  border: 1px solid #ccc;
-  padding: 10px;
-  text-align: center;
-  margin-top: 10px;
-}
-.assigned-character-image {
-  width: 80px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 8px;
+
+.custom-button:hover {
+  background-color: #e0e300;
+  color: #1156fc;
+  border-color: #e0e300;
+  box-shadow: 0px 0px 10px 4px #e0e300;
 }
 </style>

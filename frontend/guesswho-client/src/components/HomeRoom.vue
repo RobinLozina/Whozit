@@ -1,12 +1,26 @@
 <template>
-  <div class="home-room">
-    <h1 v-if="roomCode">Room Code: {{ roomCode }}</h1>
-    <div>
-      <button @click="copyRoomLink" v-if="roomCode">Copy Room Link</button>
-      <button @click="generateNewRoom">Generate New Room</button>
+  <div class="home-room relative min-h-screen p-5">
+    <div
+      class="top-right absolute top-6 right-6 flex flex-col items-center w-72"
+    >
+      <h1 v-if="roomCode" class="info-text text-center mb-2 text-xl">
+        <span>Room: </span>
+        <span class="font-futura">{{ shortRoomCode }}</span>
+      </h1>
+      <button @click="generateNewRoom" class="custom-button">
+        Generate New Room
+      </button>
     </div>
-    <div v-if="isWaiting">
-      <p>Waiting for another player to join...</p>
+
+    <div
+      class="centered absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+    >
+      <div v-if="isWaiting" class="info-text text-center mb-5 text-4xl">
+        <p>Waiting for another player to join...</p>
+      </div>
+      <button @click="copyRoomLink" v-if="roomCode" class="custom-button">
+        Copy Room Link
+      </button>
     </div>
   </div>
 </template>
@@ -47,6 +61,14 @@ export default {
     if (this.socket) {
       this.socket.close(); // Close WebSocket connection
     }
+  },
+  computed: {
+    shortRoomCode() {
+      if (this.roomCode.length <= 4) {
+        return this.roomCode;
+      }
+      return "*".repeat(this.roomCode.length - 4) + this.roomCode.slice(-4);
+    },
   },
   methods: {
     async generateNewRoom() {
@@ -137,17 +159,27 @@ export default {
 </script>
 
 <style scoped>
-.buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+.custom-button {
+  padding: 8px;
+  width: 300px;
+  margin: 16px;
+  color: #ffffff;
+  border: 4px solid #e0e300; /* Yellow border */
+  background-color: #1156fc; /* Blue background */
+  border-radius: 4px;
+  font-size: 16px;
+  font-family: "Futura PT", sans-serif;
+  text-transform: uppercase;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 1000;
+  transition: all linear 100ms;
 }
-</style>
 
-<style scoped>
-.buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+.custom-button:hover {
+  background-color: #e0e300; /* Yellow background */
+  color: #1156fc; /* Blue text */
+  border-color: #e0e300; /* Keep the border yellow */
+  box-shadow: 0px 0px 10px 4px #e0e300; /* Yellow shadow around the button */
 }
 </style>

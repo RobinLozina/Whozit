@@ -1,19 +1,17 @@
 <template>
-  <div class="waiting-room">
-    <h1>Waiting Room: {{ roomCode }}</h1>
-    <ul>
-      <li v-for="player in players" :key="player.id">
-        Player ID: {{ player.id }}
-        <span v-if="player.is_creator">(Creator)</span>
-      </li>
-    </ul>
-    <div v-if="isCreator">
-      <div class="creator-controls">
-        <label>Select Character Folder:</label>
+  <div
+    class="waiting-room container mx-auto p-6 text-white min-h-screen flex items-center justify-center"
+  >
+    <div
+      v-if="isCreator"
+      class="creator-controls bg-gray-800 p-6 rounded-lg shadow-lg flex flex-col items-center"
+    >
+      <p class="text-3xl font-bold mb-4">Select Character Folder:</p>
+      <div class="flex flex-col space-y-4 mb-6">
         <div
           v-for="folder in filteredFolders"
           :key="folder"
-          class="folder-option"
+          class="flex items-center space-x-4"
         >
           <input
             type="checkbox"
@@ -21,15 +19,21 @@
             :value="folder"
             :checked="selectedFolder === folder"
             @change="selectFolder(folder)"
+            class="form-checkbox h-6 w-6 text-blue-600 border-gray-300 rounded focus:ring-0"
           />
-          <label :for="folder">{{ folder }}</label>
+          <label :for="folder" class="text-2xl">{{ folder }}</label>
         </div>
-        <button @click="startGame" :disabled="!selectedFolder">
-          Start Game
-        </button>
       </div>
+      <button
+        @click="startGame"
+        :disabled="!selectedFolder"
+        class="custom-button"
+      >
+        Start Game
+      </button>
     </div>
-    <div v-else>
+
+    <div v-else class="text-center text-4xl font-sweaty">
       <p>Waiting for the creator to start the game...</p>
     </div>
   </div>
@@ -81,6 +85,12 @@ export default {
       return this.availableFolders.filter((folder) => {
         return folder !== "Couilloum" || this.isCouilloumVisible;
       });
+    },
+    shortRoomCode() {
+      if (this.roomCode.length <= 4) {
+        return this.roomCode;
+      }
+      return "*".repeat(this.roomCode.length - 4) + this.roomCode.slice(-4);
     },
   },
   methods: {
@@ -183,23 +193,27 @@ export default {
 </script>
 
 <style scoped>
-.waiting-room {
-  padding: 20px;
-  max-width: 600px;
-  margin: 0 auto;
+.custom-button {
+  padding: 8px;
+  width: 300px;
+  margin: 16px;
+  color: #ffffff;
+  border: 4px solid #e0e300; /* Yellow border */
+  background-color: #1156fc; /* Blue background */
+  border-radius: 4px;
+  font-size: 16px;
+  font-family: "Futura PT", sans-serif;
+  text-transform: uppercase;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 1000;
+  transition: all linear 100ms;
 }
 
-.creator-controls {
-  margin-top: 20px;
-}
-
-.folder-option {
-  margin: 10px 0;
-  display: flex;
-  align-items: center;
-}
-
-input[type="checkbox"] {
-  margin-right: 10px;
+.custom-button:hover {
+  background-color: #e0e300; /* Yellow background */
+  color: #1156fc; /* Blue text */
+  border-color: #e0e300; /* Keep the border yellow */
+  box-shadow: 0px 0px 10px 4px #e0e300; /* Yellow shadow around the button */
 }
 </style>

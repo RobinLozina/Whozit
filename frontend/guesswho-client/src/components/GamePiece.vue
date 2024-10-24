@@ -1,15 +1,18 @@
 <template>
   <div
-    class="game-piece"
-    :class="{ lowered: isLowered, selected: isSelected }"
+    class="game-piece rounded-lg border-4 pt-1 pb-4 px-4 bg-red-600 text-white flex flex-col items-center cursor-pointer transition-transform transform hover:scale-105"
+    :class="{
+      'opacity-70 translate-y-2': isLowered,
+      'is-selected': isSelected,
+    }"
     @click="toggleLowered"
   >
+    <p class="character-name mb-2 text-sm font-bold">{{ character.name }}</p>
     <img
       :src="character.image_url"
       :alt="character.name"
-      class="character-image"
+      class="character-image w-20 h-20 object-cover rounded-lg"
     />
-    <p class="character-name">{{ character.name }}</p>
   </div>
 </template>
 
@@ -50,43 +53,7 @@ export default {
 </script>
 
 <style scoped>
-.game-piece {
-  width: 100px; /* Fixed width */
-  height: 150px; /* Fixed height */
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 10px;
-  text-align: center;
-  cursor: pointer;
-  transition: transform 0.3s;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.game-piece.lowered {
-  transform: translateY(20px);
-  opacity: 0.7;
-}
-
-.game-piece.selected {
-  border-color: rebeccapurple;
-}
-
-.character-image {
-  width: 80px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 50%;
-}
-
-.character-name {
-  margin-top: 5px;
-  font-size: 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
+.is-selected {
+  border: 4px solid #e0e300;
 }
 </style>

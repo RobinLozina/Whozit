@@ -57,10 +57,10 @@ export default {
 <style scoped>
 .game-board {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  grid-template-rows: repeat(4, auto);
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(3, auto);
   column-gap: 10px;
   row-gap: 20px;
-  padding: 20px;
+  padding: 0px 20px;
 }
 </style>
