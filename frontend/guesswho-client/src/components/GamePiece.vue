@@ -1,6 +1,6 @@
 <template>
   <div
-    class="game-piece rounded-lg border-4 pt-1 pb-4 px-4 bg-red-600 text-white flex flex-col items-center cursor-pointer transition-transform transform hover:scale-105"
+    class="game-piece w-28 h-36 rounded-lg border-4 pt-1 pb-4 px-4 bg-red-600 text-white flex flex-col items-center cursor-pointer transition-transform transform hover:scale-105"
     :class="{
       'opacity-70 translate-y-2': isLowered,
       'is-selected': isSelected,

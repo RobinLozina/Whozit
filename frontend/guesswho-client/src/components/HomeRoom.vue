@@ -19,7 +19,7 @@
         <p>Waiting for another player to join...</p>
       </div>
       <button @click="copyRoomLink" v-if="roomCode" class="custom-button">
-        Copy Room Link
+        {{ linkCopied ? "Link Copied!" : "Copy Room Link" }}
       </button>
     </div>
   </div>
@@ -35,6 +35,7 @@ export default {
       isWaiting: false, // Track if the player is waiting for another player
       intervalId: null, // To store the interval ID for clearing later
       socket: null, // WebSocket connection
+      linkCopied: false, // Track if the link has been copied
     };
   },
   created() {
@@ -46,9 +47,6 @@ export default {
       if (!playerId) {
         // If there's no player ID, the player hasn't joined yet
         this.joinRoom();
-      } else {
-        // If player has already joined, start fetching room details
-        this.checkForPlayers();
       }
     } else {
       // If there is no code in the URL, generate a new room
@@ -104,29 +102,19 @@ export default {
         console.error("Error joining room:", error);
       }
     },
-    async checkForPlayers() {
-      // This function is kept for compatibility but WebSocket is now the preferred way.
-      this.intervalId = setInterval(async () => {
-        try {
-          const playerId = sessionStorage.getItem("playerId");
-          const response = await axios.get(
-            `http://127.0.0.1:8000/api/waiting/${this.roomCode}/?player_id=${playerId}`
-          );
-          if (response.data.room.players.length > 1) {
-            clearInterval(this.intervalId); // Stop checking if another player has joined
-            // Redirect to waiting room if more than one player is present
-            this.$router.push(`/waiting/${this.roomCode}`);
-          }
-        } catch (error) {
-          console.error("Error checking players:", error);
-        }
-      }, 2000); // Check every 2 seconds
-    },
+
     copyRoomLink() {
       const link = `${window.location.origin}/waiting/${this.roomCode}`;
       navigator.clipboard.writeText(link);
       console.log("copy link and room code is : " + this.roomCode);
-      alert("Room link copied!");
+
+      // Set linkCopied to true to update the button text
+      this.linkCopied = true;
+
+      // Set a timer to revert the button text back to 'Copy Room Link' after 3 seconds
+      setTimeout(() => {
+        this.linkCopied = false;
+      }, 3000);
     },
     connectWebSocket() {
       console.log("trying to connect to web socket");

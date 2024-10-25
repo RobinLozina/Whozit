@@ -1,5 +1,5 @@
 <template>
-  <div class="relative min-h-screen flex flex-row p-6">
+  <div class="relative min-h-screen flex flex-row p-4">
     <!-- Game Board and Controls -->
     <div class="flex flex-col w-3/4 pr-4">
       <GameBoard
@@ -10,12 +10,12 @@
       />
 
       <!-- Opponent Character Info -->
-      <div v-if="otherPlayerCharacter" class="mt-4 text-center">
+      <div v-if="otherPlayerCharacter" class="mt-2 text-center">
         <h3 class="text-xl font-bold mb-2 text-white">
           Your Opponent's Character to Guess
         </h3>
         <div
-          class="border-4 inline-block rounded-lg pt-1 pb-4 px-4 bg-red-600 text-white"
+          class="border-4 w-28 h-36 inline-block rounded-lg pt-1 pb-4 px-4 bg-red-600 text-white"
         >
           <p class="mb-2 text-sm font-bold">
             {{ otherPlayerCharacter.name }}
@@ -60,7 +60,7 @@
       </div>
 
       <!-- Return to Waiting Room button -->
-      <div v-if="showReturnButton" class="flex justify-center mt-4">
+      <div v-if="showReturnButton" class="flex justify-center">
         <button @click="returnToWaitingRoom" class="custom-button">
           Return to Waiting Room
         </button>
@@ -101,6 +101,17 @@
         />
       </div>
     </div>
+
+    <!-- Winner Modal -->
+    <div
+      v-if="showWinnerModal"
+      class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
+    >
+      <div class="bg-white p-6 rounded-lg shadow-lg text-center">
+        <h2 class="text-3xl text-black font-bold mb-4">{{ winnerMessage }}</h2>
+        <button @click="closeWinnerModal" class="custom-button mt-4">OK</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -126,6 +137,8 @@ export default {
       ws: null,
       playerId:
         sessionStorage.getItem("playerId") || Math.floor(Math.random() * 100),
+      showWinnerModal: false, // Control visibility of winner modal
+      winnerMessage: "", // Message to show in the winner modal
     };
   },
   mounted() {
@@ -155,7 +168,22 @@ export default {
             player_id: data.message.player_id,
           });
         } else if (data.message.event === "guess_result") {
-          alert(`Guess was ${data.message.correct ? "correct" : "incorrect"}!`);
+          // Different message for guesser and opponent
+          console.log(data.message);
+          if (data.message.player_id === this.playerId) {
+            // The player who made the guess
+            this.showWinnerModal = true;
+            this.winnerMessage = data.message.correct
+              ? "Congratulations! You guessed correctly!"
+              : "Oops! Your guess was incorrect.";
+            console.log(this.winnerMessage);
+          } else {
+            // The opponent
+            this.showWinnerModal = true;
+            this.winnerMessage = data.message.correct
+              ? "The other player's guess was correct. You lose!"
+              : "Nice! The other player's guess was wrong. You win!";
+          }
           // Show return button after guess is made
           this.showReturnButton = true;
         } else if (data.message.event === "guess_mode") {
@@ -203,7 +231,6 @@ export default {
     },
     confirmGuess() {
       if (this.selectedCharacter) {
-        console.log(`Character guessed: ${this.selectedCharacter.name}`);
         this.ws.send(
           JSON.stringify({
             event: "guess_character",
@@ -211,14 +238,12 @@ export default {
             player_id: this.playerId,
           })
         );
-        console.log("guessed character sent");
 
         // Exit guess mode
         this.quitGuessMode();
       }
     },
     quitGuessMode() {
-      console.log("Guessing canceled");
       this.isGuessMode = false;
       this.selectedCharacter = null;
 
@@ -230,6 +255,10 @@ export default {
     },
     returnToWaitingRoom() {
       this.$router.push(`/waiting/${this.roomCode}`);
+    },
+    closeWinnerModal() {
+      this.showWinnerModal = false;
+      this.winnerMessage = "";
     },
   },
 };

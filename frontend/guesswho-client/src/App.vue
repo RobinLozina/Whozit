@@ -1,6 +1,6 @@
 <template>
   <div id="app" class="bg-animated-gradient min-h-screen">
-    <main class="flex-grow container">
+    <main class="flex-grow">
       <router-view />
       <!-- This will render the current route component (Home or Game) -->
     </main>

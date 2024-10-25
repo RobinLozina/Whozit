@@ -88,6 +88,15 @@ class WaitingRoomConsumer(AsyncWebsocketConsumer):
             'message': message
         }))
 
+    async def chat_message(self, event):
+        # Handle a chat message
+        message = event['message']
+
+        # Send the message to the WebSocket
+        await self.send(text_data=json.dumps({
+            'message': message
+        }))
+
 
 class GameRoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -210,12 +219,12 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
                 elif event == 'guess_character':
                     guessed_character = text_data_json.get('character_name')
                     player_id = text_data_json.get('player_id')  # Assuming each player has a unique identifier
-
+                    player_index = int(text_data_json.get('player_id')) % 2 
                     # Check if the guessed character matches the other player's character
                     game_data = games_data.get(self.room_code, {})
-                    other_player_character = game_data['player_characters'][1 if player_id == 0 else 0]
+                    player_character = game_data['player_characters'][player_index]
 
-                    correct = guessed_character == other_player_character['name']
+                    correct = guessed_character == player_character['name']
 
                     # Notify both players of the guess result
                     await self.channel_layer.group_send(
@@ -224,9 +233,10 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
                             'type': 'guess_result',
                             'message': {
                                 'event': 'guess_result',
+                                'player_id': player_id,
                                 'correct': correct,
                                 'guessed_character': guessed_character,
-                                'actual_character': other_player_character['name'],
+                                'actual_character': player_character['name'],
                             }
                         }
                     )
