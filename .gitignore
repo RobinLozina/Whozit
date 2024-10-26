@@ -11,10 +11,9 @@ __pycache__/
 db.sqlite3
 *.log
 
-# Media - Ignore Couilloum folder under characters
+# Media 
 media/
 characters/
-Couilloum
 
 # IDE
 .vscode/

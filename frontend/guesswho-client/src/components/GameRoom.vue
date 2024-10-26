@@ -96,7 +96,7 @@
         <input
           v-model="newMessage"
           @keyup.enter="sendMessage"
-          placeholder="Type your question or guess..."
+          placeholder="Type your question"
           class="p-2 border-2 border-gray-300 text-black rounded w-full"
         />
       </div>
@@ -148,12 +148,10 @@ export default {
   methods: {
     connectToWebSocket() {
       const wsUrl = `ws://127.0.0.1:8000/ws/game/${this.roomCode}/`;
-      console.log("Connecting to WebSocket for Game Room:", wsUrl);
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        console.log("WebSocket Message For Game Received:", data);
 
         if (data.message.event === "game_started") {
           this.characters = data.message.characters;
@@ -169,14 +167,12 @@ export default {
           });
         } else if (data.message.event === "guess_result") {
           // Different message for guesser and opponent
-          console.log(data.message);
           if (data.message.player_id === this.playerId) {
             // The player who made the guess
             this.showWinnerModal = true;
             this.winnerMessage = data.message.correct
               ? "Congratulations! You guessed correctly!"
               : "Oops! Your guess was incorrect.";
-            console.log(this.winnerMessage);
           } else {
             // The opponent
             this.showWinnerModal = true;

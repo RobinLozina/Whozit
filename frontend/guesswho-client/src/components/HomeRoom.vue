@@ -78,7 +78,6 @@ export default {
 
         // Store the creator player ID in local storage
         sessionStorage.setItem("playerId", response.data.players[0].id);
-        console.log("generated a new room");
         // Set up WebSocket connection for real-time updates
         this.connectWebSocket();
       } catch (error) {
@@ -106,7 +105,6 @@ export default {
     copyRoomLink() {
       const link = `${window.location.origin}/waiting/${this.roomCode}`;
       navigator.clipboard.writeText(link);
-      console.log("copy link and room code is : " + this.roomCode);
 
       // Set linkCopied to true to update the button text
       this.linkCopied = true;
@@ -117,7 +115,6 @@ export default {
       }, 3000);
     },
     connectWebSocket() {
-      console.log("trying to connect to web socket");
       const socketUrl = `ws://127.0.0.1:8000/ws/waiting/${this.roomCode}/`;
       this.socket = new WebSocket(socketUrl);
 

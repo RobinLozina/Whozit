@@ -141,7 +141,6 @@ export default {
       // Listen for messages from the server
       this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        console.log("WebSocket Message For Waiting Received:", data); // Log the entire data to see its content
 
         if (data.message.event === "game_started") {
           // Redirect both players to the GameRoom
