@@ -7,11 +7,11 @@
     }"
     @click="toggleLowered"
   >
-    <p class="character-name mb-2 text-sm font-bold">{{ character.name }}</p>
+    <p class="mb-2 text-sm font-bold">{{ character.name }}</p>
     <img
       :src="character.image_url"
       :alt="character.name"
-      class="character-image w-20 h-20 object-cover rounded-lg"
+      class="w-20 h-20 object-cover rounded-lg"
     />
   </div>
 </template>
