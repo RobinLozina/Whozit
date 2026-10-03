@@ -1,94 +1,84 @@
-# Whozit? - Multiplayer Game
+# Whozit?
 
-Welcome to the **Whozit?** Multiplayer Game! This is an online version of the classic "Guess Who" game that allows two players to play against each other in real-time. The backend is powered by **Django** and **Django Channels** for WebSockets, while the frontend uses **Vue.js** for a dynamic and interactive experience.
+An online version of the board game _Guess Who?_ for two players. Each player gets a secret character, and you take turns asking yes-or-no questions to find out who your opponent has.
 
-## Table of Contents
+**Play it at [whozit-theta.vercel.app](https://whozit-theta.vercel.app)**
 
-1. [Project Overview](#project-overview)
-2. [Features](#features)
-3. [Technology Stack](#technology-stack)
-4. [Running the Application Locally](#running)
-5. [License](#license)
+![The game board with 24 cartoon characters, three of them flipped down](docs/screenshot.png)
 
-## Project Overview
+## How to play
 
-This project is an online version of "Guess Who" where players can create rooms, join rooms, and play against each other in real-time. The game utilizes **Django** for backend logic and API handling, and **Vue.js** for the front-end user interface. Real-time communication between players is handled using **WebSockets** via Django Channels, allowing for a smooth and interactive gaming experience.
+1. Open the game and click **Copy invite link**. Send the link to a friend.
+2. When your friend joins, you both land in the waiting room. As the host, you pick a character set and start the game.
+3. Ask yes-or-no questions in the chat, like "Does your character wear a hat?". Click a card to flip it down when you rule it out.
+4. When you think you know who your opponent has, click **Make a guess**, pick the character, and confirm. Guess right and you win; guess wrong and you lose.
 
-## Features
+The free server goes to sleep when nobody is playing, so the first page load can take up to a minute.
 
-- Real-time multiplayer gameplay.
-- Room creation and joining using unique room codes.
-- Dynamic game board with characters, allowing players to guess the opponent's character.
-- WebSocket implementation for real-time communication.
-- Ability to customize characters by selecting folders with character sets.
+## Add your own character set
 
-## Technology Stack
+Every folder in `backend/media/characters/` is a character set:
 
-- **Backend**: Django, Django Channels, WebSockets
-- **Frontend**: Vue.js, TailwindCSS
-- **Database**: SQLite (for development), PostgreSQL (recommended for production)
-- **WebSockets**: Channels with Redis (in production)
+1. Create a folder, for example `backend/media/characters/Pokemon/`.
+2. Put at least 24 images in it (`.jpg`, `.png` or `.webp`). If there are more than 24, each game picks 24 at random.
+3. Name each file after its character. `Homer Simpson.jpg` shows up as "Homer Simpson".
 
-## Running the Application Locally
+The new set shows up in the waiting room right away. For the online version, commit and push the folder.
 
-1. **Clone the repository**:
+## Run it locally
 
-   ```sh
-   git clone https://github.com/RobinLozina/Whozit.git
-   cd Whozit
+You need Python 3.10 or newer and Node.js 18 or newer.
 
-   ```
+Start the backend in one terminal:
 
-2. **Create a virtual environment and activate it**:
+```sh
+git clone https://github.com/RobinLozina/Whozit.git
+cd Whozit/backend
+python -m venv venv
+source venv/bin/activate        # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+python manage.py migrate
+uvicorn guessWho.asgi:application --host 127.0.0.1 --port 8000
+```
 
-   ```sh
-   cd backend
-   python -m venv venv
-   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+Then start the frontend in a second terminal, from the `Whozit` folder:
 
-   ```
+```sh
+cd frontend/guesswho-client
+npm install
+npm run serve
+```
 
-3. **Install the dependencies**:
+Open [localhost:8080](http://localhost:8080). To play against yourself, paste the invite link into a new tab.
 
-   ```sh
-   pip install -r requirements.txt
+## Deploy your own copy
 
-   ```
+The backend runs on [Render](https://render.com) and the frontend on [Vercel](https://vercel.com), both on their free plans. Vercel can't host the backend because it doesn't support WebSockets.
 
-4. **Run database migrations**:
+1. **Backend:** in Render, choose **New → Blueprint** and select your fork. Render reads [`render.yaml`](render.yaml) and sets everything up, including a random secret key. Copy the URL it gives you, like `https://whozit-api.onrender.com`.
+2. **Frontend:** in Vercel, import your fork, set **Root Directory** to `frontend/guesswho-client`, and add the environment variable `VUE_APP_BACKEND_URL` with your Render URL (no trailing `/`).
 
-   ```sh
-   python manage.py migrate
+Both redeploy automatically when you push to `master`. Changing `VUE_APP_BACKEND_URL` doesn't, though: redeploy the frontend by hand after you change it.
 
-   ```
+The free Render plan has no permanent storage, so the database is reset every time the backend restarts. Games only last one session, so nothing important is lost.
 
-5. **Run the ASGI server**:
+### Environment variables
 
-   ```sh
-   uvicorn guessWho.asgi:application --host 127.0.0.1 --port 8000
+| Variable               | Where  | What it does                                      | Default                                       |
+| ---------------------- | ------ | ------------------------------------------------- | --------------------------------------------- |
+| `DJANGO_SECRET_KEY`    | Render | Django's secret key                               | An insecure development key                   |
+| `DJANGO_DEBUG`         | Render | `1` turns on debug mode, `0` turns it off         | `1`                                           |
+| `DJANGO_ALLOWED_HOSTS` | Render | Comma-separated host names the backend answers to | `*`                                           |
+| `VUE_APP_BACKEND_URL`  | Vercel | Address of the backend                            | Port 8000 on the machine that served the page |
 
-   ```
+`render.yaml` sets the first three for you.
 
-6. **Navigate to the frontend directory**:
+## How it's built
 
-   ```sh
-   cd frontend/guesswho-client
-
-   ```
-
-7. **Install the dependencies**:
-
-   ```sh
-   npm install
-
-   ```
-
-8. **Start the Vue development server**:
-
-   ```sh
-   npm run serve
-   ```
+- **Backend:** Django with Django REST Framework for the API and Django Channels for the WebSockets, served by Uvicorn. Game state lives in memory, so the backend runs as a single instance.
+- **Frontend:** Vue 3 with Vue Router and Tailwind CSS.
+- **Database:** SQLite.
 
 ## License
 
-This project is licensed under the MIT License. See the LICENSE file for more details.
+MIT. See [LICENSE.md](LICENSE.md).
