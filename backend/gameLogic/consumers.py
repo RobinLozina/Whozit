@@ -134,6 +134,12 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
         )
         print(f"GameRoomConsumer left group: {self.room_group_name}")
 
+        # A player leaving ends the game for both: send the other one back to the waiting room
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {'type': 'player_left', 'message': {'event': 'player_left'}}
+        )
+
         if self.room_code in connected_players:
             connected_players[self.room_code] -= 1
             if connected_players[self.room_code] <= 0:
@@ -272,3 +278,6 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
     async def guess_mode_end(self, event):
         message = event['message']
         await self.send(text_data=json.dumps({'message': message}))
+
+    async def player_left(self, event):
+        await self.send(text_data=json.dumps({'message': event['message']}))
