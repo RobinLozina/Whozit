@@ -117,6 +117,7 @@
 
 <script>
 import GameBoard from "./GameBoard.vue";
+import { API_URL, WS_URL } from "../backend";
 
 export default {
   components: {
@@ -147,13 +148,17 @@ export default {
   },
   methods: {
     connectToWebSocket() {
-      const wsUrl = `ws://127.0.0.1:8000/ws/game/${this.roomCode}/`;
+      const wsUrl = `${WS_URL}/ws/game/${this.roomCode}/`;
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
 
         if (data.message.event === "game_started") {
+          // Backend sends /media/... paths; resolve them against the backend host
+          [...data.message.characters, ...data.message.player_characters].forEach(
+            (c) => (c.image_url = new URL(c.image_url, API_URL).href)
+          );
           this.characters = data.message.characters;
 
           const playerIndex = this.playerId % 2;

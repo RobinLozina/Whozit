@@ -27,6 +27,7 @@
 
 <script>
 import axios from "axios";
+import { API_URL, WS_URL } from "../backend";
 
 export default {
   data() {
@@ -72,7 +73,7 @@ export default {
     async generateNewRoom() {
       try {
         // Create a new room via the backend API
-        const response = await axios.post("http://127.0.0.1:8000/api/rooms/");
+        const response = await axios.post(`${API_URL}/api/rooms/`);
         this.roomCode = response.data.code;
         this.isWaiting = true; // Set waiting state to true
 
@@ -88,7 +89,7 @@ export default {
       try {
         // Join the existing room with the room code
         const response = await axios.post(
-          `http://127.0.0.1:8000/api/join/${this.roomCode}/`
+          `${API_URL}/api/join/${this.roomCode}/`
         );
 
         // Store player ID in local storage for later use
@@ -115,7 +116,7 @@ export default {
       }, 3000);
     },
     connectWebSocket() {
-      const socketUrl = `ws://127.0.0.1:8000/ws/waiting/${this.roomCode}/`;
+      const socketUrl = `${WS_URL}/ws/waiting/${this.roomCode}/`;
       this.socket = new WebSocket(socketUrl);
 
       this.socket.onmessage = (event) => {

@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: whozit-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    # Free plan has no persistent disk: the SQLite DB is recreated on every start
+    startCommand: python manage.py migrate && uvicorn guessWho.asgi:application --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.2
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "0"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: .onrender.com

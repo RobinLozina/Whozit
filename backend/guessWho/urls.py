@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.urls import re_path
 from django.conf import settings
-from django.conf.urls.static import static
+from django.views.static import serve
 from rest_framework.routers import DefaultRouter
 from gameLogic.views import home, character_folders, RoomViewSet, JoinRoomView, WaitingRoomView, StartGameView 
 
@@ -33,4 +33,7 @@ urlpatterns = [
     path('api/waiting/<uuid:code>/', WaitingRoomView.as_view(), name='waiting_room'),
     path('api/start/<uuid:code>/', StartGameView.as_view(), name='start_game'),
     path('api/character_folders/', character_folders, name='character_folders'),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    # Serve character images even with DEBUG off (static() only works in DEBUG).
+    # ponytail: Django's serve view is slow, move media to a CDN if traffic grows
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+]

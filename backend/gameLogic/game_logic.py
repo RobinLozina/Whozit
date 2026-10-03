@@ -48,7 +48,7 @@ def initialize_game(room_code, selected_folder):
             # Create a character from the actual files
             character_name = os.path.splitext(file_name)[0]
             character_image = f'characters/{selected_folder}/{file_name}'
-            image_url = f'http://127.0.0.1:8000{settings.MEDIA_URL}characters/{selected_folder}/{file_name}'
+            image_url = f'{settings.MEDIA_URL}characters/{selected_folder}/{file_name}'
 
         # Create the Character instance in the database
         Character.objects.create(
@@ -69,7 +69,7 @@ def initialize_game(room_code, selected_folder):
         'player_characters': [
             {
                 'name': os.path.splitext(player_char)[0],
-                'image_url': f'http://127.0.0.1:8000{settings.MEDIA_URL}characters/{selected_folder}/{player_char}'
+                'image_url': f'{settings.MEDIA_URL}characters/{selected_folder}/{player_char}'
             }
             for player_char in player_characters
         ]

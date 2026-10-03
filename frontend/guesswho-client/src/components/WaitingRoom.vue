@@ -41,6 +41,7 @@
 
 <script>
 import axios from "axios";
+import { API_URL, WS_URL } from "../backend";
 
 export default {
   data() {
@@ -97,7 +98,7 @@ export default {
     async joinRoom() {
       try {
         const response = await axios.post(
-          `http://127.0.0.1:8000/api/join/${this.roomCode}/`
+          `${API_URL}/api/join/${this.roomCode}/`
         );
 
         sessionStorage.setItem("playerId", response.data.player_id);
@@ -110,7 +111,7 @@ export default {
       try {
         const playerId = sessionStorage.getItem("playerId");
         const response = await axios.get(
-          `http://127.0.0.1:8000/api/waiting/${this.roomCode}/?player_id=${playerId}`
+          `${API_URL}/api/waiting/${this.roomCode}/?player_id=${playerId}`
         );
 
         this.players = response.data.room.players;
@@ -127,7 +128,7 @@ export default {
       try {
         // Fetch the list of available character folders
         const response = await axios.get(
-          `http://127.0.0.1:8000/api/character_folders/`
+          `${API_URL}/api/character_folders/`
         );
         this.availableFolders = response.data.folders; // Assuming response returns an array of folder names
       } catch (error) {
@@ -135,7 +136,7 @@ export default {
       }
     },
     connectWebSocket() {
-      const wsUrl = `ws://127.0.0.1:8000/ws/waiting/${this.roomCode}/`;
+      const wsUrl = `${WS_URL}/ws/waiting/${this.roomCode}/`;
       this.ws = new WebSocket(wsUrl);
 
       // Listen for messages from the server
