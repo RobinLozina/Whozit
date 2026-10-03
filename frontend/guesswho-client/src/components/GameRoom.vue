@@ -46,10 +46,14 @@
           />
           <div class="min-w-0">
             <p class="text-sm text-white/75">Your character</p>
-            <p class="break-words font-display text-3xl leading-tight tracking-wide">
+            <p
+              class="break-words font-display text-3xl leading-tight tracking-wide"
+            >
               {{ myCharacter.name }}
             </p>
-            <p class="text-sm text-white/75">Your opponent is trying to guess it.</p>
+            <p class="text-sm text-white/75">
+              Your opponent is trying to guess it.
+            </p>
           </div>
         </div>
 
@@ -126,7 +130,9 @@
         <p v-if="opponentCharacterName" class="mt-2 text-white/85">
           Your opponent had {{ opponentCharacterName }}.
         </p>
-        <button @click="leaveGame" class="btn mt-6">Back to waiting room</button>
+        <button @click="leaveGame" class="btn mt-6">
+          Back to waiting room
+        </button>
       </div>
     </div>
   </div>
@@ -180,9 +186,10 @@ export default {
 
         if (data.message.event === "game_started") {
           // Backend sends /media/... paths; resolve them against the backend host
-          [...data.message.characters, ...data.message.player_characters].forEach(
-            (c) => (c.image_url = new URL(c.image_url, API_URL).href)
-          );
+          [
+            ...data.message.characters,
+            ...data.message.player_characters,
+          ].forEach((c) => (c.image_url = new URL(c.image_url, API_URL).href));
           const playerIndex = this.playerId % 2;
           this.characters = data.message.characters;
           this.myCharacter = data.message.player_characters[1 - playerIndex];
@@ -204,7 +211,9 @@ export default {
         } else if (data.message.event === "guess_result") {
           const { correct, player_id } = data.message;
           if (player_id === this.playerId) {
-            this.winnerMessage = correct ? "You win!" : "Wrong guess, you lose!";
+            this.winnerMessage = correct
+              ? "You win!"
+              : "Wrong guess, you lose!";
             this.opponentCharacterName = data.message.actual_character;
           } else {
             this.winnerMessage = correct
@@ -217,7 +226,8 @@ export default {
           this.opponentIsGuessing = false;
         } else if (data.message.event === "guess_mode") {
           this.opponentIsGuessing =
-            data.message.is_guessing && data.message.player_id !== this.playerId;
+            data.message.is_guessing &&
+            data.message.player_id !== this.playerId;
         } else if (data.message.event === "player_left") {
           // Tell the waiting room why we're back, unless the game was already over
           this.$router.push({
@@ -238,7 +248,7 @@ export default {
             event: "chat",
             message: this.newMessage,
             player_id: this.playerId,
-          })
+          }),
         );
         this.newMessage = "";
       }
@@ -251,7 +261,7 @@ export default {
         JSON.stringify({
           event: "guess_mode",
           player_id: this.playerId,
-        })
+        }),
       );
     },
     handleCharacterSelection(character) {
@@ -266,7 +276,7 @@ export default {
             event: "guess_character",
             character_name: this.selectedCharacter.name,
             player_id: this.playerId,
-          })
+          }),
         );
 
         // Exit guess mode
@@ -280,7 +290,7 @@ export default {
       this.ws.send(
         JSON.stringify({
           event: "quit_guessing",
-        })
+        }),
       );
     },
     leaveGame() {

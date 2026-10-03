@@ -112,7 +112,7 @@ export default {
     async joinRoom() {
       try {
         const response = await axios.post(
-          `${API_URL}/api/join/${this.roomCode}/`
+          `${API_URL}/api/join/${this.roomCode}/`,
         );
 
         sessionStorage.setItem("playerId", response.data.player_id);
@@ -125,7 +125,7 @@ export default {
       try {
         const playerId = sessionStorage.getItem("playerId");
         const response = await axios.get(
-          `${API_URL}/api/waiting/${this.roomCode}/?player_id=${playerId}`
+          `${API_URL}/api/waiting/${this.roomCode}/?player_id=${playerId}`,
         );
 
         this.players = response.data.room.players;
@@ -141,9 +141,7 @@ export default {
     async fetchAvailableFolders() {
       try {
         // Fetch the list of available character folders
-        const response = await axios.get(
-          `${API_URL}/api/character_folders/`
-        );
+        const response = await axios.get(`${API_URL}/api/character_folders/`);
         this.availableFolders = response.data.folders; // Assuming response returns an array of folder names
       } catch (error) {
         console.error("Error fetching character folders:", error);
@@ -174,7 +172,7 @@ export default {
           JSON.stringify({
             event: "start_game",
             folder: this.selectedFolder,
-          })
+          }),
         );
       }
     },
@@ -196,4 +194,3 @@ export default {
   },
 };
 </script>
-

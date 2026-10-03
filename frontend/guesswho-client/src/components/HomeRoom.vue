@@ -1,5 +1,7 @@
 <template>
-  <div class="flex min-h-screen flex-col items-center justify-center gap-6 p-4 text-center">
+  <div
+    class="flex min-h-screen flex-col items-center justify-center gap-6 p-4 text-center"
+  >
     <h1 class="font-display text-7xl tracking-wide drop-shadow-lg sm:text-8xl">
       Whozit?
     </h1>
@@ -82,7 +84,7 @@ export default {
       try {
         // Join the existing room with the room code
         const response = await axios.post(
-          `${API_URL}/api/join/${this.roomCode}/`
+          `${API_URL}/api/join/${this.roomCode}/`,
         );
 
         // Store player ID in local storage for later use
@@ -136,4 +138,3 @@ export default {
   },
 };
 </script>
-
