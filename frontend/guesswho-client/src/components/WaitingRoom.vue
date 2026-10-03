@@ -1,41 +1,52 @@
 <template>
-  <div
-    class="waiting-room container mx-auto p-6 text-white min-h-screen flex items-center justify-center"
-  >
-    <div
-      v-if="isCreator"
-      class="creator-controls bg-gray-800 p-6 rounded-lg shadow-lg flex flex-col items-center"
+  <div class="flex min-h-screen flex-col items-center justify-center gap-4 p-4">
+    <p
+      v-if="opponentLeft"
+      role="status"
+      class="w-full max-w-md rounded-lg bg-zap px-4 py-3 font-medium text-tray"
     >
-      <p class="text-3xl font-bold mb-4">Select Character Folder:</p>
-      <div class="flex flex-col space-y-4 mb-6">
-        <div
-          v-for="folder in filteredFolders"
-          :key="folder"
-          class="flex items-center space-x-4"
-        >
-          <input
-            type="checkbox"
-            :id="folder"
-            :value="folder"
-            :checked="selectedFolder === folder"
-            @change="selectFolder(folder)"
-            class="form-checkbox h-6 w-6 text-blue-600 border-gray-300 rounded focus:ring-0"
-          />
-          <label :for="folder" class="text-2xl">{{ folder }}</label>
-        </div>
-      </div>
-      <button
-        @click="startGame"
-        :disabled="!selectedFolder"
-        class="custom-button"
-      >
-        Start Game
-      </button>
-    </div>
+      Your opponent left the game.
+    </p>
 
-    <div v-else class="text-center text-4xl font-sweaty">
-      <p>Waiting for the creator to start the game...</p>
-    </div>
+    <form
+      v-if="isCreator"
+      @submit.prevent="startGame"
+      class="panel w-full max-w-md p-6"
+    >
+      <fieldset>
+        <legend class="mb-4 font-display text-4xl tracking-wide">
+          Choose a character set
+        </legend>
+        <div class="flex flex-col gap-2">
+          <label
+            v-for="folder in filteredFolders"
+            :key="folder"
+            class="flex cursor-pointer items-center gap-3 rounded-lg border-2 px-4 py-3 text-lg transition-colors"
+            :class="
+              selectedFolder === folder
+                ? 'border-zap bg-board'
+                : 'border-white/30 hover:border-white'
+            "
+          >
+            <input
+              type="radio"
+              name="folder"
+              :value="folder"
+              v-model="selectedFolder"
+              class="h-5 w-5 accent-zap"
+            />
+            {{ folder }}
+          </label>
+        </div>
+      </fieldset>
+      <button type="submit" :disabled="!selectedFolder" class="btn mt-6 w-full">
+        Start game
+      </button>
+    </form>
+
+    <p v-else class="text-center font-display text-4xl tracking-wide">
+      Waiting for the host to start the game…
+    </p>
   </div>
 </template>
 
@@ -82,6 +93,9 @@ export default {
     window.removeEventListener("keydown", this.handleKeyPress);
   },
   computed: {
+    opponentLeft() {
+      return this.$route.query.left === "1";
+    },
     filteredFolders() {
       return this.availableFolders.filter((folder) => {
         return folder !== "Couilloum" || this.isCouilloumVisible;
@@ -153,15 +167,6 @@ export default {
         console.log("WebSocket connection closed for waiting room.");
       };
     },
-    selectFolder(folder) {
-      // Set the selected folder, unselect any other
-      if (this.selectedFolder === folder) {
-        // If the same folder is clicked, unselect it
-        this.selectedFolder = null;
-      } else {
-        this.selectedFolder = folder;
-      }
-    },
     startGame() {
       if (this.ws && this.selectedFolder) {
         // Send message via WebSocket to signal that the game is starting with the selected folder
@@ -192,28 +197,3 @@ export default {
 };
 </script>
 
-<style scoped>
-.custom-button {
-  padding: 8px;
-  width: 300px;
-  margin: 16px;
-  color: #ffffff;
-  border: 4px solid #e0e300; /* Yellow border */
-  background-color: #1156fc; /* Blue background */
-  border-radius: 4px;
-  font-size: 16px;
-  font-family: "Futura PT", sans-serif;
-  text-transform: uppercase;
-  font-weight: 600;
-  cursor: pointer;
-  z-index: 1000;
-  transition: all linear 100ms;
-}
-
-.custom-button:hover {
-  background-color: #e0e300; /* Yellow background */
-  color: #1156fc; /* Blue text */
-  border-color: #e0e300; /* Keep the border yellow */
-  box-shadow: 0px 0px 10px 4px #e0e300; /* Yellow shadow around the button */
-}
-</style>

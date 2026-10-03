@@ -1,27 +1,20 @@
 <template>
-  <div class="home-room relative min-h-screen p-5">
-    <div
-      class="top-right absolute top-6 right-6 flex flex-col items-center w-72"
-    >
-      <h1 v-if="roomCode" class="info-text text-center mb-2 text-xl">
-        <span>Room: </span>
-        <span class="font-futura">{{ shortRoomCode }}</span>
-      </h1>
-      <button @click="generateNewRoom" class="custom-button">
-        Generate New Room
-      </button>
-    </div>
+  <div class="flex min-h-screen flex-col items-center justify-center gap-6 p-4 text-center">
+    <h1 class="font-display text-7xl tracking-wide drop-shadow-lg sm:text-8xl">
+      Whozit?
+    </h1>
 
-    <div
-      class="centered absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-    >
-      <div v-if="isWaiting" class="info-text text-center mb-5 text-4xl">
-        <p>Waiting for another player to join...</p>
-      </div>
-      <button @click="copyRoomLink" v-if="roomCode" class="custom-button">
-        {{ linkCopied ? "Link Copied!" : "Copy Room Link" }}
+    <template v-if="roomCode">
+      <p v-if="isWaiting" class="text-xl">
+        Send the invite link to a friend. The game opens when they join.
+      </p>
+      <button @click="copyRoomLink" class="btn w-72">
+        {{ linkCopied ? "Link copied" : "Copy invite link" }}
       </button>
-    </div>
+      <p class="text-sm text-white/75">Room {{ shortRoomCode }}</p>
+    </template>
+
+    <button @click="generateNewRoom" class="btn btn-quiet">New room</button>
   </div>
 </template>
 
@@ -66,7 +59,7 @@ export default {
       if (this.roomCode.length <= 4) {
         return this.roomCode;
       }
-      return "*".repeat(this.roomCode.length - 4) + this.roomCode.slice(-4);
+      return "…" + this.roomCode.slice(-4);
     },
   },
   methods: {
@@ -144,28 +137,3 @@ export default {
 };
 </script>
 
-<style scoped>
-.custom-button {
-  padding: 8px;
-  width: 300px;
-  margin: 16px;
-  color: #ffffff;
-  border: 4px solid #e0e300; /* Yellow border */
-  background-color: #1156fc; /* Blue background */
-  border-radius: 4px;
-  font-size: 16px;
-  font-family: "Futura PT", sans-serif;
-  text-transform: uppercase;
-  font-weight: 600;
-  cursor: pointer;
-  z-index: 1000;
-  transition: all linear 100ms;
-}
-
-.custom-button:hover {
-  background-color: #e0e300; /* Yellow background */
-  color: #1156fc; /* Blue text */
-  border-color: #e0e300; /* Keep the border yellow */
-  box-shadow: 0px 0px 10px 4px #e0e300; /* Yellow shadow around the button */
-}
-</style>

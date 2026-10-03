@@ -1,115 +1,132 @@
 <template>
-  <div class="relative min-h-screen flex flex-row p-4">
-    <!-- Game Board and Controls -->
-    <div class="flex flex-col w-3/4 pr-4">
-      <GameBoard
-        :characters="characters"
-        :is-guess-mode="isGuessMode"
-        :selected-character="selectedCharacter"
-        @character-selected="handleCharacterSelection"
-      />
+  <div class="mx-auto flex min-h-screen max-w-7xl flex-col gap-4 p-3 sm:p-5">
+    <header class="flex items-center justify-between gap-4">
+      <h1 class="font-display text-4xl tracking-wide drop-shadow">Whozit?</h1>
+      <button @click="leaveGame" class="btn btn-quiet">Leave game</button>
+    </header>
 
-      <!-- Opponent Character Info -->
-      <div v-if="otherPlayerCharacter" class="mt-2 text-center">
-        <h3 class="text-xl font-bold mb-2 text-white">
-          Your Opponent's Character to Guess
-        </h3>
-        <div
-          class="border-4 w-28 h-36 inline-block rounded-lg pt-1 pb-4 px-4 bg-red-600 text-white"
-        >
-          <p class="mb-2 text-sm font-bold">
-            {{ otherPlayerCharacter.name }}
-          </p>
-          <img
-            :src="otherPlayerCharacter.image_url"
-            :alt="otherPlayerCharacter.name"
-            class="w-20 h-20 object-cover rounded-lg"
-          />
-        </div>
-      </div>
+    <p
+      v-if="!characters.length"
+      class="m-auto text-center font-display text-3xl tracking-wide"
+    >
+      Waiting for your opponent…
+    </p>
 
-      <!-- Guess button or "The other player is guessing!" message -->
-      <div class="flex items-center justify-center mt-4">
-        <button
-          v-if="!isGuessMode && !opponentIsGuessing && !showReturnButton"
-          @click="toggleGuessMode"
-          class="custom-button"
+    <div v-else class="grid flex-1 items-start gap-4 lg:grid-cols-[1fr_20rem]">
+      <!-- Board -->
+      <section class="rounded-2xl bg-tray/50 p-3 sm:p-4" aria-label="Board">
+        <p
+          v-if="isGuessMode"
+          class="mb-3 rounded-lg bg-zap px-3 py-2 font-medium text-tray"
         >
-          Guess
-        </button>
+          Pick the character you think your opponent has.
+        </p>
         <p
           v-else-if="opponentIsGuessing"
-          class="text-2xl text-center font-bold"
+          class="mb-3 rounded-lg bg-white/15 px-3 py-2 font-medium"
         >
-          The other player is guessing!
+          Your opponent is making a guess…
         </p>
-      </div>
+        <GameBoard
+          :key="gameKey"
+          :characters="characters"
+          :is-guess-mode="isGuessMode"
+          :selected-character="selectedCharacter"
+          @character-selected="handleCharacterSelection"
+        />
+      </section>
 
-      <!-- Confirm Guess and Quit Guessing buttons -->
-      <div v-if="isGuessMode" class="flex justify-center">
-        <button
-          v-if="selectedCharacter"
-          @click="confirmGuess"
-          class="mr-2 custom-button"
-        >
-          Confirm Guess
-        </button>
-        <button @click="quitGuessMode" class="custom-button">
-          Quit Guessing
-        </button>
-      </div>
-
-      <!-- Return to Waiting Room button -->
-      <div v-if="showReturnButton" class="flex justify-center">
-        <button @click="returnToWaitingRoom" class="custom-button">
-          Return to Waiting Room
-        </button>
-      </div>
-    </div>
-
-    <!-- Chat Messages and Input -->
-    <div class="chat-container w-1/4 flex flex-col">
-      <div
-        class="messages border-2 border-gray-400 rounded p-4 bg-gray-800 text-white overflow-y-auto flex-grow"
-      >
-        <div
-          v-for="(message, index) in messages"
-          :key="index"
-          class="message mb-2"
-        >
-          <div
-            class="p-2 rounded-md"
-            :class="{
-              'bg-blue-500 text-white ml-auto w-2/3 text-right':
-                message.player_id === playerId,
-              'bg-yellow-500 text-black mr-auto w-2/3 text-left':
-                message.player_id !== playerId,
-            }"
-          >
-            {{ message.text }}
+      <aside class="flex flex-col gap-4">
+        <!-- The character the opponent has to guess -->
+        <div v-if="myCharacter" class="panel flex items-center gap-4">
+          <img
+            :src="myCharacter.image_url"
+            alt=""
+            class="h-28 w-20 shrink-0 rounded-lg border-4 border-white bg-white object-contain"
+          />
+          <div class="min-w-0">
+            <p class="text-sm text-white/75">Your character</p>
+            <p class="break-words font-display text-3xl leading-tight tracking-wide">
+              {{ myCharacter.name }}
+            </p>
+            <p class="text-sm text-white/75">Your opponent is trying to guess it.</p>
           </div>
         </div>
-      </div>
 
-      <!-- Input Section - Fixed at the Bottom -->
-      <div class="mt-2">
-        <input
-          v-model="newMessage"
-          @keyup.enter="sendMessage"
-          placeholder="Type your question"
-          class="p-2 border-2 border-gray-300 text-black rounded w-full"
-        />
-      </div>
+        <!-- Guess controls -->
+        <div v-if="isGuessMode" class="flex gap-2">
+          <button
+            @click="confirmGuess"
+            :disabled="!selectedCharacter"
+            class="btn flex-1"
+          >
+            Confirm guess
+          </button>
+          <button @click="quitGuessMode" class="btn btn-quiet">Cancel</button>
+        </div>
+        <button
+          v-else
+          @click="toggleGuessMode"
+          :disabled="opponentIsGuessing || gameOver"
+          class="btn w-full"
+        >
+          Make a guess
+        </button>
+
+        <!-- Chat -->
+        <div class="panel flex flex-col">
+          <h2 class="mb-2 font-display text-2xl tracking-wide">Questions</h2>
+          <div
+            ref="messages"
+            class="flex max-h-[45vh] min-h-[10rem] flex-col gap-2 overflow-y-auto pr-1"
+          >
+            <p v-if="!messages.length" class="text-sm text-white/75">
+              Ask yes-or-no questions, like “Does your character wear glasses?”
+            </p>
+            <p
+              v-for="(message, index) in messages"
+              :key="index"
+              class="max-w-[85%] break-words rounded-lg px-3 py-2"
+              :class="
+                message.player_id === playerId
+                  ? 'self-end bg-board'
+                  : 'self-start bg-zap text-tray'
+              "
+            >
+              {{ message.text }}
+            </p>
+          </div>
+          <form @submit.prevent="sendMessage" class="mt-3 flex gap-2">
+            <input
+              v-model="newMessage"
+              aria-label="Message"
+              placeholder="Type a question or answer"
+              class="min-w-0 flex-1 rounded-md px-3 py-2 text-tray placeholder:text-tray/50 focus-visible:outline focus-visible:outline-4 focus-visible:outline-zap"
+            />
+            <button type="submit" class="btn px-3 text-lg">Send</button>
+          </form>
+        </div>
+      </aside>
     </div>
 
-    <!-- Winner Modal -->
+    <!-- Result -->
     <div
-      v-if="showWinnerModal"
-      class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
+      v-if="winnerMessage"
+      class="fixed inset-0 z-10 flex items-center justify-center bg-tray/70 p-4"
     >
-      <div class="bg-white p-6 rounded-lg shadow-lg text-center">
-        <h2 class="text-3xl text-black font-bold mb-4">{{ winnerMessage }}</h2>
-        <button @click="closeWinnerModal" class="custom-button mt-4">OK</button>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="result-title"
+        class="w-full max-w-md rounded-2xl border-4 border-zap bg-board p-6 text-center shadow-2xl"
+      >
+        <h2 id="result-title" class="font-display text-4xl tracking-wide">
+          {{ winnerMessage }}
+        </h2>
+        <p v-if="opponentCharacterName" class="mt-2 text-white/85">
+          Your opponent had {{ opponentCharacterName }}.
+        </p>
+        <button @click="leaveGame" class="btn mt-6">Back to waiting room</button>
       </div>
     </div>
   </div>
@@ -129,22 +146,29 @@ export default {
       newMessage: "",
       messages: [],
       characters: [],
-      playerCharacter: null,
-      otherPlayerCharacter: null,
+      myCharacter: null, // The character the opponent has to guess
+      gameKey: 0, // Bumped on every new game so the cards start fresh
       isGuessMode: false,
       opponentIsGuessing: false,
       selectedCharacter: null,
-      showReturnButton: false, // To control visibility of return button
+      gameOver: false,
       ws: null,
       playerId:
         sessionStorage.getItem("playerId") || Math.floor(Math.random() * 100),
-      showWinnerModal: false, // Control visibility of winner modal
-      winnerMessage: "", // Message to show in the winner modal
+      winnerMessage: "", // Shown in the result dialog when set
+      opponentCharacterName: "",
     };
   },
   mounted() {
     this.connectToWebSocket();
     sessionStorage.setItem("playerId", this.playerId);
+  },
+  beforeUnmount() {
+    // Closing the socket tells the server we left, which sends the opponent back too
+    if (this.ws) {
+      this.ws.onmessage = null;
+      this.ws.close();
+    }
   },
   methods: {
     connectToWebSocket() {
@@ -159,42 +183,47 @@ export default {
           [...data.message.characters, ...data.message.player_characters].forEach(
             (c) => (c.image_url = new URL(c.image_url, API_URL).href)
           );
-          this.characters = data.message.characters;
-
           const playerIndex = this.playerId % 2;
-          this.playerCharacter = data.message.player_characters[playerIndex];
-          this.otherPlayerCharacter =
-            data.message.player_characters[1 - playerIndex];
+          this.characters = data.message.characters;
+          this.myCharacter = data.message.player_characters[1 - playerIndex];
+          this.gameKey++;
+          this.isGuessMode = false;
+          this.opponentIsGuessing = false;
+          this.selectedCharacter = null;
+          this.gameOver = false;
+          this.winnerMessage = "";
         } else if (data.message.event === "chat") {
           this.messages.push({
             text: data.message.message,
             player_id: data.message.player_id,
           });
+          this.$nextTick(() => {
+            const box = this.$refs.messages;
+            if (box) box.scrollTop = box.scrollHeight;
+          });
         } else if (data.message.event === "guess_result") {
-          // Different message for guesser and opponent
-          if (data.message.player_id === this.playerId) {
-            // The player who made the guess
-            this.showWinnerModal = true;
-            this.winnerMessage = data.message.correct
-              ? "Congratulations! You guessed correctly!"
-              : "Oops! Your guess was incorrect.";
+          const { correct, player_id } = data.message;
+          if (player_id === this.playerId) {
+            this.winnerMessage = correct ? "You win!" : "Wrong guess, you lose!";
+            this.opponentCharacterName = data.message.actual_character;
           } else {
-            // The opponent
-            this.showWinnerModal = true;
-            this.winnerMessage = data.message.correct
-              ? "The other player's guess was correct. You lose!"
-              : "Nice! The other player's guess was wrong. You win!";
+            this.winnerMessage = correct
+              ? "They guessed it, you lose!"
+              : "They guessed wrong, you win!";
+            this.opponentCharacterName = "";
           }
-          // Show return button after guess is made
-          this.showReturnButton = true;
+          this.gameOver = true;
+          this.isGuessMode = false;
+          this.opponentIsGuessing = false;
         } else if (data.message.event === "guess_mode") {
-          if (data.message.is_guessing) {
-            if (data.message.player_id !== this.playerId) {
-              this.opponentIsGuessing = true;
-            }
-          } else {
-            this.opponentIsGuessing = false;
-          }
+          this.opponentIsGuessing =
+            data.message.is_guessing && data.message.player_id !== this.playerId;
+        } else if (data.message.event === "player_left") {
+          // Tell the waiting room why we're back, unless the game was already over
+          this.$router.push({
+            path: `/waiting/${this.roomCode}`,
+            query: this.gameOver ? {} : { left: "1" },
+          });
         }
       };
 
@@ -254,53 +283,9 @@ export default {
         })
       );
     },
-    returnToWaitingRoom() {
+    leaveGame() {
       this.$router.push(`/waiting/${this.roomCode}`);
-    },
-    closeWinnerModal() {
-      this.showWinnerModal = false;
-      this.winnerMessage = "";
     },
   },
 };
 </script>
-
-<style scoped>
-.custom-button {
-  padding: 8px;
-  width: 200px;
-  color: #ffffff;
-  border: 4px solid #e0e300;
-  background-color: #1156fc;
-  border-radius: 4px;
-  font-size: 16px;
-  text-transform: uppercase;
-  font-weight: 600;
-  cursor: pointer;
-  z-index: 1000;
-  transition: all linear 100ms;
-}
-
-.chat-container {
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.messages {
-  flex-grow: 1;
-}
-
-.message {
-  word-wrap: break-word; /* Ensure long words break */
-  word-break: break-word; /* Handle overflow gracefully */
-  max-width: 100%; /* Make sure the message doesn't exceed its container width */
-}
-
-.custom-button:hover {
-  background-color: #e0e300;
-  color: #1156fc;
-  border-color: #e0e300;
-  box-shadow: 0px 0px 10px 4px #e0e300;
-}
-</style>

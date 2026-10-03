@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center rounded-md border-4 border-zap bg-board px-5 py-2
+      font-display text-xl tracking-wide text-white transition-colors
+      hover:bg-zap hover:text-board
+      focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-white
+      disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-board disabled:hover:text-white;
+  }
+  .btn-quiet {
+    @apply border-white/60 bg-transparent hover:border-white hover:bg-white;
+  }
+  .panel {
+    @apply rounded-xl bg-tray/70 p-4 shadow-lg;
+  }
+}

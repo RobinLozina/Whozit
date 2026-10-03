@@ -1,14 +1,16 @@
 <template>
-  <div class="game-board">
+  <div class="grid grid-cols-4 gap-2 sm:grid-cols-6 sm:gap-3 xl:grid-cols-8">
     <GamePiece
       v-for="(character, index) in characters"
       :key="index"
       :character="character"
       :is-guess-mode="isGuessMode"
       :is-selected="
-        selectedCharacter && selectedCharacterName === character.name
+        isGuessMode &&
+        !!selectedCharacter &&
+        selectedCharacter.name === character.name
       "
-      @character-clicked="selectCharacter"
+      @character-clicked="$emit('character-selected', $event)"
     />
   </div>
 </template>
@@ -35,32 +37,6 @@ export default {
       default: null,
     },
   },
-  data() {
-    return {
-      selectedCharacterName: null, // Track the currently selected character by ID
-    };
-  },
-  methods: {
-    selectCharacter(character) {
-      if (this.isGuessMode) {
-        // Set the selected character ID to the current character's ID
-        this.selectedCharacterName = character.name;
-
-        // Emit the character that was clicked to the parent component
-        this.$emit("character-selected", character);
-      }
-    },
-  },
+  emits: ["character-selected"],
 };
 </script>
-
-<style scoped>
-.game-board {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  grid-template-rows: repeat(3, auto);
-  column-gap: 10px;
-  row-gap: 20px;
-  padding: 0px 20px;
-}
-</style>

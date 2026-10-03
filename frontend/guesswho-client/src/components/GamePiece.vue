@@ -1,19 +1,33 @@
 <template>
-  <div
-    class="game-piece w-28 h-36 rounded-lg border-4 pt-1 pb-4 px-4 bg-red-600 text-white flex flex-col items-center cursor-pointer transition-transform transform hover:scale-105"
-    :class="{
-      'opacity-70 translate-y-2': isLowered,
-      'is-selected': isSelected,
-    }"
+  <!-- Fixed 3:4 card with a one-line name, so every card is the same size -->
+  <button
+    type="button"
+    class="group relative block aspect-[3/4] w-full [perspective:600px] focus-visible:outline-none"
+    :aria-label="character.name"
+    :aria-pressed="isGuessMode ? isSelected : isLowered"
     @click="toggleLowered"
   >
-    <p class="mb-2 text-sm font-bold">{{ character.name }}</p>
-    <img
-      :src="character.image_url"
-      :alt="character.name"
-      class="w-20 h-20 object-cover rounded-lg"
-    />
-  </div>
+    <div
+      class="card absolute inset-0 flex flex-col overflow-hidden rounded-lg border-4 bg-plate shadow-md group-focus-visible:ring-4 group-focus-visible:ring-white"
+      :class="[
+        isSelected ? 'border-zap ring-4 ring-zap' : 'border-white',
+        { lowered: isLowered, 'hover:border-zap': isGuessMode },
+      ]"
+    >
+      <img
+        :src="character.image_url"
+        alt=""
+        class="min-h-0 w-full flex-1 bg-white object-contain"
+        draggable="false"
+      />
+      <p
+        class="truncate px-1 pb-1 pt-1.5 font-display text-sm leading-none sm:text-base"
+        :title="character.name"
+      >
+        {{ character.name }}
+      </p>
+    </div>
+  </button>
 </template>
 
 <script>
@@ -33,9 +47,10 @@ export default {
       required: true,
     },
   },
+  emits: ["character-clicked"],
   data() {
     return {
-      isLowered: this.character.isLowered || false,
+      isLowered: false,
     };
   },
   methods: {
@@ -53,7 +68,20 @@ export default {
 </script>
 
 <style scoped>
-.is-selected {
-  border: 4px solid #e0e300;
+/* Lowered cards tip backwards like the flaps on the real board */
+.card {
+  transform-origin: bottom;
+  transition: transform 250ms cubic-bezier(0.2, 0.8, 0.2, 1), filter 250ms;
+}
+
+.card.lowered {
+  transform: rotateX(62deg);
+  filter: brightness(0.45) saturate(0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
 }
 </style>
