@@ -243,6 +243,7 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
                                 'correct': correct,
                                 'guessed_character': guessed_character,
                                 'actual_character': player_character['name'],
+                                'guesser_character': game_data['player_characters'][1 - player_index]['name'],
                             }
                         }
                     )

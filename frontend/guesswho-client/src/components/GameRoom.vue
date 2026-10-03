@@ -219,7 +219,7 @@ export default {
             this.winnerMessage = correct
               ? "They guessed it, you lose!"
               : "They guessed wrong, you win!";
-            this.opponentCharacterName = "";
+            this.opponentCharacterName = data.message.guesser_character;
           }
           this.gameOver = true;
           this.isGuessMode = false;
